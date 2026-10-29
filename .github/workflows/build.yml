@@ -1,0 +1,141 @@
+name: Build La Reader
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Tests and web build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+      - name: Upload web build
+        uses: actions/upload-artifact@v7
+        with:
+          name: la-reader-web
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    name: Android debug APK
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install locked dependencies
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+      - name: Install Android SDK components
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - name: Build and sync app
+        run: |
+          pnpm build
+          pnpm exec cap sync android
+      - name: Assemble APK
+        working-directory: android
+        run: bash ./gradlew --no-daemon assembleDebug
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: la-reader-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: iOS simulator and unsigned archive
+    needs: verify
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Check Xcode
+        run: xcodebuild -version
+      - name: Install locked dependencies
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+      - name: Build and sync app
+        run: |
+          pnpm build
+          pnpm exec cap sync ios
+      - name: Compile simulator app
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build-ios \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Compile unsigned device archive
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath artifacts/LaReader.xcarchive \
+            -derivedDataPath build-ios-device \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+      - name: Package iOS outputs
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build-ios/Build/Products/Debug-iphonesimulator/App.app \
+            artifacts/la-reader-ios-simulator.zip
+          ditto -c -k --sequesterRsrc --keepParent \
+            artifacts/LaReader.xcarchive \
+            artifacts/la-reader-ios-unsigned.xcarchive.zip
+      - name: Upload iOS builds
+        uses: actions/upload-artifact@v7
+        with:
+          name: la-reader-ios
+          path: |
+            artifacts/la-reader-ios-simulator.zip
+            artifacts/la-reader-ios-unsigned.xcarchive.zip
+          if-no-files-found: error
+          retention-days: 14
