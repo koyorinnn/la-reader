@@ -8,6 +8,8 @@ Giao diện Liquid Glass dùng các thanh điều khiển trong mờ và hiệu 
 
 GitHub Actions đã chạy thành công: 61 kiểm thử, bản web, APK Android debug, iOS Simulator và archive iOS chưa ký. [Mở bản build đã xác minh](https://github.com/koyorinnn/la-reader/actions/runs/40907874320), tải các tệp trong **Artifacts**. Xem [hướng dẫn build và cài thử](GITHUB.md).
 
+Workflow cũng xuất `LaReader-unsigned.ipa` trong artifact **la-reader-ios-unsigned-ipa**. Đây là IPA chưa ký để tự ký lại trước khi cài lên iPhone; tải từ [lần chạy mới nhất](https://github.com/koyorinnn/la-reader/actions/workflows/build.yml).
+
 ## Chạy trên máy tính
 
 Cài Node.js 22 trở lên. Để dùng đúng các phiên bản thư viện trong `pnpm-lock.yaml`, mở terminal tại thư mục này và chạy:

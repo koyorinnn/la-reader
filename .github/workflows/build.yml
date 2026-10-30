@@ -81,7 +81,7 @@ jobs:
           retention-days: 14
 
   ios:
-    name: iOS simulator and unsigned archive
+    name: iOS simulator, archive and unsigned IPA
     needs: verify
     runs-on: macos-26
     timeout-minutes: 40
@@ -124,6 +124,15 @@ jobs:
             -derivedDataPath build-ios-device \
             CODE_SIGNING_ALLOWED=NO \
             archive
+      - name: Package unsigned IPA for re-signing
+        run: |
+          IOS_APP_PATH=artifacts/LaReader.xcarchive/Products/Applications/App.app
+          test -d "$IOS_APP_PATH"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleSupportedPlatforms:0' "$IOS_APP_PATH/Info.plist")" = iPhoneOS
+          mkdir -p artifacts/ipa/Payload
+          ditto "$IOS_APP_PATH" artifacts/ipa/Payload/App.app
+          ditto -c -k --keepParent artifacts/ipa/Payload artifacts/LaReader-unsigned.ipa
+          unzip -t artifacts/LaReader-unsigned.ipa
       - name: Package iOS outputs
         run: |
           ditto -c -k --sequesterRsrc --keepParent \
@@ -139,5 +148,12 @@ jobs:
           path: |
             artifacts/la-reader-ios-simulator.zip
             artifacts/la-reader-ios-unsigned.xcarchive.zip
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload unsigned IPA for re-signing
+        uses: actions/upload-artifact@v7
+        with:
+          name: la-reader-ios-unsigned-ipa
+          path: artifacts/LaReader-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
