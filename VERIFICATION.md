@@ -32,10 +32,20 @@ Edge/Chromium tự động. Lượt kiểm tra trước đã xác nhận nhập 
 
 Không ghi nhận ngoại lệ JavaScript trong lượt kiểm tra cuối. Bản web không có service worker: cần máy chủ để tải app lần đầu hoặc tải lại app. App native chứa sẵn tài nguyên web trong gói cài đặt.
 
+## Build GitHub đã xác nhận
+
+Đã kiểm tra [lần chạy 40907874320](https://github.com/koyorinnn/la-reader/actions/runs/40907874320), mã nguồn `c18ca2a7246d60a35fa7c6ee2e45014cc39b2ee5`. Cả ba job hoàn tất thành công:
+
+- Tests and web build: 61 kiểm thử và production build.
+- Android debug APK: đã biên dịch và tải lên `la-reader-android-debug` chứa `app-debug.apk`.
+- iOS simulator and unsigned archive: đã biên dịch bản Simulator và archive thiết bị chưa ký, tải lên `la-reader-ios`.
+
+Lần chạy đầu gặp lỗi công cụ Android SDK chưa nằm trong PATH. Workflow hiện cài SDK tools trước khi gọi `sdkmanager`; lần chạy trên đã xác nhận bản sửa.
+
 ## Chưa xác nhận
 
 Chưa có APK/AAB/IPA được biên dịch hoặc ký cục bộ. Môi trường hiện tại chưa có toolchain Android/Xcode được cấu hình để chạy bản native. Kiểm thử mobile trong trình duyệt không thay thế kiểm thử WebView và Filesystem trên thiết bị thật.
 
-Đã chuẩn bị GitHub Actions với job kiểm thử/web, APK Android debug, iOS Simulator và archive iOS chưa ký. Xem kết quả thực tế tại [GitHub Actions](https://github.com/koyorinnn/la-reader/actions). Cấu hình workflow không thay thế kết quả build thành công.
+Chưa ký iOS, tạo AAB phát hành hoặc phân phối lên TestFlight/App Store/Play Store.
 
 Trước khi phát hành, cần chạy iPhone/iPad và Android thật: nhập tệp qua Files/nhà cung cấp tài liệu, bộ nhớ với tệp lớn, xoay màn hình, mở lại app sau khi hệ điều hành đóng, các EPUB bên ngoài có font hoặc bố cục phức tạp, ký và phân phối.

@@ -6,7 +6,7 @@ Giao diện Liquid Glass dùng các thanh điều khiển trong mờ và hiệu 
 
 ## Build trên GitHub
 
-Repo đã có GitHub Actions để kiểm thử, build web, tạo APK Android debug và build iOS Simulator / archive iOS chưa ký. Xem [hướng dẫn upload và build](GITHUB.md). Workflow chưa được chạy trên GitHub trong phiên bàn giao này; cần push repository để xác minh kết quả CI thực tế.
+GitHub Actions đã chạy thành công: 61 kiểm thử, bản web, APK Android debug, iOS Simulator và archive iOS chưa ký. [Mở bản build đã xác minh](https://github.com/koyorinnn/la-reader/actions/runs/40907874320), tải các tệp trong **Artifacts**. Xem [hướng dẫn build và cài thử](GITHUB.md).
 
 ## Chạy trên máy tính
 
@@ -52,7 +52,7 @@ npx cap open ios
 
 Thư mục `ios/` đã được tạo sẵn. Trong Xcode, chọn development team, thay bundle ID `app.la.reader` thành ID riêng rồi chạy trên simulator hoặc iPhone. Archive và phân phối qua TestFlight/App Store cần tài khoản Apple Developer và cấu hình ký của chủ app.
 
-Sau mỗi lần thay đổi mã nguồn, chạy `npm run build` và `npx cap sync` trước khi chạy lại native. Trong môi trường tạo dự án này chưa có bộ công cụ Android/Xcode: chưa biên dịch, ký hoặc kiểm thử APK/IPA trên thiết bị thật.
+Sau mỗi lần thay đổi mã nguồn, chạy `npm run build` và `npx cap sync` trước khi chạy lại native. Android và iOS đã biên dịch thành công trên GitHub Actions; bản iOS chưa ký và chưa kiểm thử trên thiết bị thật.
 
 App đã có icon và màn hình khởi động riêng cho hai nền tảng. Tệp `ios/App/App/PrivacyInfo.xcprivacy` được đưa vào tài nguyên Xcode, khai báo UserDefaults với lý do `CA92.1` và FileTimestamp với lý do `C617.1`, theo tài liệu [Preferences](https://capacitorjs.com/docs/apis/preferences) và [Filesystem](https://capacitorjs.com/docs/apis/filesystem). Những khai báo này phản ánh việc lưu dữ liệu cục bộ của bản app hiện tại; cần xem lại khi thêm plugin hoặc chức năng thu thập dữ liệu.
 

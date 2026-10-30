@@ -42,4 +42,4 @@ Tài liệu tham chiếu: [môi trường Capacitor](https://capacitorjs.com/doc
 
 ## Trạng thái xác minh
 
-Workflow được chuẩn bị trong mã nguồn. Chỉ có thể xác nhận build GitHub thành công sau khi push lên repository và thấy các job thực tế hoàn tất. Xem `VERIFICATION.md` để biết các kiểm thử đã chạy cục bộ.
+Đã xác nhận cả ba job thành công tại [lần chạy 40907874320](https://github.com/koyorinnn/la-reader/actions/runs/40907874320), mã nguồn `c18ca2a7246d60a35fa7c6ee2e45014cc39b2ee5`. Các artifact Android, iOS và web đã được tạo. Đăng nhập GitHub để tải trong mục **Artifacts**; nếu artifact hết hạn, chạy lại workflow. Xem `VERIFICATION.md` để biết phạm vi kiểm tra.
