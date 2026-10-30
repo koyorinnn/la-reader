@@ -42,6 +42,8 @@ Không ghi nhận ngoại lệ JavaScript trong lượt kiểm tra cuối. Bản
 
 Lần chạy đầu gặp lỗi công cụ Android SDK chưa nằm trong PATH. Workflow hiện cài SDK tools trước khi gọi `sdkmanager`; lần chạy trên đã xác nhận bản sửa.
 
+Lần chạy bổ sung [41003932498](https://github.com/koyorinnn/la-reader/actions/runs/41003932498), mã nguồn `d35331cade1af60026a6e8f778b32978fdec54c6`, đã hoàn tất cả ba job và tạo thêm `LaReader-unsigned.ipa`. Đã tải artifact, đối chiếu SHA-256 với GitHub, kiểm tra ZIP, cấu trúc `Payload/App.app`, executable Mach-O, nền tảng `iPhoneOS`, bundle ID, tài nguyên web và privacy manifest. File này chưa được ký để cài lên thiết bị.
+
 ## Chưa xác nhận
 
 Chưa có APK/AAB/IPA được biên dịch hoặc ký cục bộ. Môi trường hiện tại chưa có toolchain Android/Xcode được cấu hình để chạy bản native. Kiểm thử mobile trong trình duyệt không thay thế kiểm thử WebView và Filesystem trên thiết bị thật.

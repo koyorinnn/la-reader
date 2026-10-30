@@ -45,4 +45,4 @@ Tài liệu tham chiếu: [môi trường Capacitor](https://capacitorjs.com/doc
 
 ## Trạng thái xác minh
 
-Đã xác nhận cả ba job thành công tại [lần chạy 40907874320](https://github.com/koyorinnn/la-reader/actions/runs/40907874320), mã nguồn `c18ca2a7246d60a35fa7c6ee2e45014cc39b2ee5`. Các artifact Android, iOS và web đã được tạo. Đăng nhập GitHub để tải trong mục **Artifacts**; nếu artifact hết hạn, chạy lại workflow. Xem `VERIFICATION.md` để biết phạm vi kiểm tra.
+Đã xác nhận cả ba job thành công tại [lần chạy 41003932498](https://github.com/koyorinnn/la-reader/actions/runs/41003932498), mã nguồn `d35331cade1af60026a6e8f778b32978fdec54c6`. Các artifact Android, iOS, IPA chưa ký và web đã được tạo. Đăng nhập GitHub để tải trong mục **Artifacts**; nếu artifact hết hạn, chạy lại workflow. Xem `VERIFICATION.md` để biết phạm vi kiểm tra.
