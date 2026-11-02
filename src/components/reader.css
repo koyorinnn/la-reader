@@ -25,6 +25,22 @@
 .rd-epub-container { height:100%; width:100%; max-width:880px; margin:0 auto; padding:26px 40px 20px; box-sizing:border-box; }
 .rd-epub-host { height:100%; width:100%; }
 .rd-epub-host iframe { border:0!important; }
+.rd-page-surface { position:relative; height:100%; width:100%; touch-action:pan-y; }
+.rd-is-zoomed .rd-page-surface { touch-action:auto; }
+.rd-spread-mode .rd-epub-container { max-width:1280px; }
+.rd-spread-mode .rd-epub-host { position:relative; }
+.rd-spread-mode .rd-epub-host::after { content:""; position:absolute; top:0; bottom:0; left:calc(50% - 13px); width:26px; background:linear-gradient(90deg,transparent,#332b2010 45%,#332b2020 50%,#ffffff24 54%,transparent); pointer-events:none; z-index:1; }
+.rd-edge-guides { position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:space-between; padding:0 10px; opacity:0; transition:opacity .2s; }
+.rd-edge-guides span { display:grid; place-items:center; width:30px; height:44px; border-radius:18px; color:var(--rd-muted); background:color-mix(in srgb,var(--rd-surface) 45%,transparent); }
+@media(hover:hover) { .rd-reading-area:hover>.rd-edge-guides { opacity:.65; } }
+.rd-turn-overlay { position:absolute; inset:0; z-index:4; pointer-events:none; perspective:1800px; overflow:hidden; }
+.rd-page-snapshot { background:var(--rd-paper); }
+.rd-turn-leaf { position:absolute; top:0; height:100%; transform-style:preserve-3d; will-change:transform; }
+.rd-turn-face { position:absolute; inset:0; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; background:var(--rd-paper); box-shadow:0 0 24px #0000001c; }
+.rd-turn-back { transform:rotateY(180deg); }
+.rd-turn-face::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,#00000013,transparent 20%,transparent 70%,#00000018); }
+.rd-is-turning>.rd-reading-area>.rd-edge-guides { opacity:0; }
+.rd-is-turning .rd-zoom-controls { pointer-events:none; }
 .rd-status { position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; background:var(--rd-paper); padding:32px; text-align:center; }
 .rd-status strong { font-weight:500; font-size:14px; }
 .rd-error h2 { margin:0; font-size:20px; font-weight:600; }

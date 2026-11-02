@@ -150,6 +150,8 @@ export async function loadSettings(): Promise<ReaderSettings> {
       lineHeight: Math.max(1.3, Math.min(2.2, Number(s.lineHeight) || 1.7)),
       comicDirection: s.comicDirection === 'rtl' ? 'rtl' : 'ltr',
       comicLayout: s.comicLayout === 'double' ? 'double' : 'single',
+      epubLayout: s.epubLayout === 'single' ? 'single' : 'double',
+      pageAnimation: ['curl', 'slide', 'none'].includes(s.pageAnimation) ? s.pageAnimation : 'curl',
     };
   } catch { return DEFAULT_SETTINGS; }
 }

@@ -159,22 +159,22 @@ describe('reader preferences', () => {
 
   it('clamps numeric values and falls back for unknown options', async () => {
     mocks.preferences.set(SETTINGS, JSON.stringify({ theme: 'neon', fontSize: 100, lineHeight: 0.1, comicDirection: 'backward' }));
-    expect(await storage.loadSettings()).toEqual({ theme: 'paper', fontSize: 30, lineHeight: 1.3, comicDirection: 'ltr', comicLayout: 'single' });
+    expect(await storage.loadSettings()).toEqual({ theme: 'paper', fontSize: 30, lineHeight: 1.3, comicDirection: 'ltr', comicLayout: 'single', epubLayout: 'double', pageAnimation: 'curl' });
     mocks.preferences.set(SETTINGS, JSON.stringify({ theme: 'dark', fontSize: -5, lineHeight: 9, comicDirection: 'rtl' }));
-    expect(await storage.loadSettings()).toEqual({ theme: 'dark', fontSize: 14, lineHeight: 2.2, comicDirection: 'rtl', comicLayout: 'single' });
+    expect(await storage.loadSettings()).toEqual({ theme: 'dark', fontSize: 14, lineHeight: 2.2, comicDirection: 'rtl', comicLayout: 'single', epubLayout: 'double', pageAnimation: 'curl' });
     mocks.preferences.set(SETTINGS, JSON.stringify({ fontSize: 'invalid', lineHeight: 'invalid' }));
     expect(await storage.loadSettings()).toEqual(DEFAULT_SETTINGS);
   });
 
   it('persists and restores valid reader settings', async () => {
-    const settings = { theme: 'sepia' as const, fontSize: 24, lineHeight: 1.9, comicDirection: 'rtl' as const, comicLayout: 'double' as const };
+    const settings = { theme: 'sepia' as const, fontSize: 24, lineHeight: 1.9, comicDirection: 'rtl' as const, comicLayout: 'double' as const, epubLayout: 'single' as const, pageAnimation: 'slide' as const };
     await storage.saveSettings(settings);
     expect(await storage.loadSettings()).toEqual(settings);
   });
 
   it('migrates old reader preferences to single-page comics while retaining other settings', async () => {
     mocks.preferences.set(SETTINGS, JSON.stringify({ theme: 'dark', fontSize: 22, lineHeight: 1.8, comicDirection: 'rtl' }));
-    expect(await storage.loadSettings()).toEqual({ theme: 'dark', fontSize: 22, lineHeight: 1.8, comicDirection: 'rtl', comicLayout: 'single' });
+    expect(await storage.loadSettings()).toEqual({ theme: 'dark', fontSize: 22, lineHeight: 1.8, comicDirection: 'rtl', comicLayout: 'single', epubLayout: 'double', pageAnimation: 'curl' });
   });
 
   it('accepts only the double-page option and falls back for malformed comic layout values', async () => {

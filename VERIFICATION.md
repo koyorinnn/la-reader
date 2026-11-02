@@ -4,11 +4,13 @@
 
 - TypeScript: `tsc --noEmit` thành công.
 - Vite production build: thành công.
-- Vitest: 61/61 kiểm thử, gồm 24 kiểm thử EPUB/ZIP/CBZ, 22 kiểm thử lưu trữ và 15 kiểm thử bố cục CBZ.
+- Vitest: 67/67 kiểm thử, gồm 24 kiểm thử EPUB/ZIP/CBZ, 22 kiểm thử lưu trữ, 15 kiểm thử bố cục CBZ và 6 kiểm thử thao tác chạm/vuốt.
 - Capacitor: đã tạo project Android và iOS, đồng bộ tài nguyên web cùng 3 plugin App, Filesystem, Preferences.
 - Ảnh icon/splash iOS và Android đã thay bằng nhận diện sách mở; privacy manifest iOS được đưa vào Xcode Resources.
 
 ## Thao tác đã thử trong trình duyệt
+
+Bản 1.1.0 Transparent Glass: 25 tình huống đã qua trên Edge/Chromium với màn hình 360px, 390px, ngang 844×390 và 1180×820. Gồm EPUB hai cột thật, đổi một/hai trang, xoay màn hình, chạm bên trong iframe EPUB, vuốt/chạm CBZ, manga, trang cuối lẻ, phóng to, chạm liên tiếp, giữ tay lâu, ba kiểu hiệu ứng, Giảm chuyển động, lưu tuỳ chỉnh/dấu trang, đọc offline và đóng trình đọc giữa lúc lật. Không có ngoại lệ JavaScript. Ảnh chụp được kiểm tra để chỉnh màu chữ và mặt giấy trong hiệu ứng lật.
 
 Edge/Chromium tự động. Lượt kiểm tra trước đã xác nhận nhập tệp, phân trang EPUB, tìm kiếm, xóa sách và lưu dữ liệu. Lượt kiểm tra mới với Liquid Glass và CBZ hai trang xác nhận 17 tình huống dưới đây trên desktop 1440px, mobile 390px/360px và landscape 844×390:
 

@@ -17,8 +17,9 @@ export interface LibraryBook {
   demo?: boolean;
 }
 export type ComicLayout = 'single' | 'double';
-export interface ReaderSettings { theme: Theme; fontSize: number; lineHeight: number; comicDirection: 'ltr' | 'rtl'; comicLayout: ComicLayout }
-export const DEFAULT_SETTINGS: ReaderSettings = { theme: 'paper', fontSize: 19, lineHeight: 1.7, comicDirection: 'ltr', comicLayout: 'single' };
+export type PageAnimation = 'curl' | 'slide' | 'none';
+export interface ReaderSettings { theme: Theme; fontSize: number; lineHeight: number; comicDirection: 'ltr' | 'rtl'; comicLayout: ComicLayout; epubLayout: ComicLayout; pageAnimation: PageAnimation }
+export const DEFAULT_SETTINGS: ReaderSettings = { theme: 'paper', fontSize: 19, lineHeight: 1.7, comicDirection: 'ltr', comicLayout: 'single', epubLayout: 'double', pageAnimation: 'curl' };
 export interface ReadingPosition { location: string; progress: number; label: string }
 export interface ReaderProps {
   book: LibraryBook;
