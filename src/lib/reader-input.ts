@@ -1,11 +1,15 @@
 export interface ReaderGesture { x: number; y: number; time: number; id: number }
 
+function isTap(start: ReaderGesture, end: { x: number; y: number; time: number }, width: number) {
+  return width > 0 && end.x >= 0 && end.x <= width && Math.hypot(end.x - start.x, end.y - start.y) <= 12 && end.time - start.time <= 450;
+}
+
 // Physical directions: -1 is the left edge, 1 is the right edge.
 export function gestureDirection(start: ReaderGesture, end: { x: number; y: number; time: number }, width: number): -1 | 1 | null {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   if (Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.5) return dx < 0 ? 1 : -1;
-  if (Math.hypot(dx, dy) > 12 || end.time - start.time > 450 || width <= 0) return null;
+  if (!isTap(start, end, width)) return null;
   const edge = Math.min(84, Math.max(44, width * 0.16));
   if (end.x >= 0 && end.x <= edge) return -1;
   if (end.x <= width && end.x >= width - edge) return 1;
@@ -16,6 +20,7 @@ export function bindReaderGestures(target: HTMLElement | Document, options: {
   bounds: () => DOMRect | undefined;
   enabled: () => boolean;
   turn: (direction: -1 | 1) => void;
+  toggleControls?: () => void;
   frame?: HTMLIFrameElement;
 }) {
   let start: ReaderGesture | null = null;
@@ -36,8 +41,11 @@ export function bindReaderGestures(target: HTMLElement | Document, options: {
     const origin = start;
     start = null;
     if (!origin || origin.id !== event.pointerId || !options.enabled() || interactive(event) || doc.getSelection()?.toString()) return;
-    const direction = gestureDirection(origin, coordinates(event), options.bounds()?.width || 0);
+    const end = coordinates(event);
+    const width = options.bounds()?.width || 0;
+    const direction = gestureDirection(origin, end, width);
     if (direction) options.turn(direction);
+    else if (isTap(origin, end, width)) options.toggleControls?.();
   };
   const cancel = () => { start = null; };
   target.addEventListener('pointerdown', down, { passive: true });

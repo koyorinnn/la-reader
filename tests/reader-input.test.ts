@@ -48,4 +48,51 @@ describe('reader gestures', () => {
     cleanup(); turn.mockClear(); pointer(area, 'pointerdown'); pointer(area, 'pointerup'); expect(turn).not.toHaveBeenCalled();
     area.remove();
   });
+  it('toggles controls for a short center tap, without also turning a page', () => {
+    const area = document.createElement('div');
+    const turn = vi.fn();
+    const toggleControls = vi.fn();
+    const cleanup = bindReaderGestures(area, { bounds: () => ({ left: 0, width: 390 }) as DOMRect, enabled: () => true, turn, toggleControls });
+    function gesture(x1: number, x2: number, y2 = 100, time = 120) {
+      for (const [type, x, y, stamp] of [['pointerdown', x1, 100, 0], ['pointerup', x2, y2, time]] as const) {
+        const event = new Event(type, { bubbles: true });
+        Object.assign(event, { pointerId: 1, button: 0, isPrimary: true, clientX: x, clientY: y });
+        Object.defineProperty(event, 'timeStamp', { value: stamp });
+        area.dispatchEvent(event);
+      }
+    }
+    gesture(195, 195);
+    expect(toggleControls).toHaveBeenCalledTimes(1);
+    expect(turn).not.toHaveBeenCalled();
+    gesture(195, 195, 100, 700); // Long press.
+    gesture(195, 195, 160); // Vertical scroll.
+    gesture(195, 220); // Selection drag.
+    gesture(-5, -5); // Outside the viewport.
+    expect(toggleControls).toHaveBeenCalledTimes(1);
+    gesture(300, 150); // Swipe.
+    gesture(380, 380); // Edge tap.
+    expect(turn).toHaveBeenCalledTimes(2);
+    expect(toggleControls).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+  it('keeps center taps on links and selected text from hiding controls', () => {
+    const area = document.createElement('div');
+    area.innerHTML = '<a href="#chapter">Chapter</a><p>Selectable text</p>';
+    document.body.append(area);
+    const toggleControls = vi.fn();
+    const cleanup = bindReaderGestures(area, { bounds: () => ({ left: 0, width: 390 }) as DOMRect, enabled: () => true, turn: vi.fn(), toggleControls });
+    const tap = (target: Element) => {
+      for (const type of ['pointerdown', 'pointerup']) {
+        const event = new Event(type, { bubbles: true });
+        Object.assign(event, { pointerId: 1, button: 0, isPrimary: true, clientX: 195, clientY: 100 });
+        target.dispatchEvent(event);
+      }
+    };
+    tap(area.querySelector('a')!);
+    window.getSelection()!.selectAllChildren(area.querySelector('p')!);
+    tap(area);
+    expect(toggleControls).not.toHaveBeenCalled();
+    window.getSelection()!.removeAllRanges();
+    cleanup(); area.remove();
+  });
 });

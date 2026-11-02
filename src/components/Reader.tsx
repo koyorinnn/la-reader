@@ -67,6 +67,7 @@ export default function Reader(props: ReaderProps) {
   const [toc, setToc] = useState<TocEntry[]>([]);
   const tocRef = useRef<TocEntry[]>([]);
   const [panel, setPanel] = useState<'contents' | 'settings' | 'bookmarks' | null>(null);
+  const [chromeVisible, setChromeVisible] = useState(true);
   const [position, setPosition] = useState<ReadingPosition>({ location: book.location || '', progress: book.progress, label: 'Đang mở sách…' });
   const [pages, setPages] = useState<string[]>([]);
   const [page, setPage] = useState(pageFrom(book.location));
@@ -80,8 +81,15 @@ export default function Reader(props: ReaderProps) {
   const rtl = book.format === 'cbz' && settings.comicDirection === 'rtl';
   const layout = book.format === 'cbz' ? settings.comicLayout : settings.epubLayout;
   const double = landscape && layout === 'double';
-  const interaction = useRef({ loading, error, panel, zoom, boundaries, rtl, double });
-  interaction.current = { loading, error, panel, zoom, boundaries, rtl, double };
+  const interaction = useRef({ loading, error, panel, zoom, boundaries, rtl, double, chromeVisible });
+  interaction.current = { loading, error, panel, zoom, boundaries, rtl, double, chromeVisible };
+
+  useEffect(() => {
+    if (!chromeVisible) dialog.current?.focus({ preventScroll: true });
+  }, [chromeVisible]);
+  useEffect(() => {
+    if (error) setChromeVisible(true);
+  }, [error]);
 
   useEffect(() => {
     mounted.current = true;
@@ -149,6 +157,7 @@ export default function Reader(props: ReaderProps) {
     return bindReaderGestures(readingArea.current, {
       bounds: () => readingArea.current?.getBoundingClientRect(), enabled: gesturesEnabled,
       turn: direction => { void turnRef.current((interaction.current.rtl ? -direction : direction) as -1 | 1); },
+      toggleControls: () => setChromeVisible(visible => !visible),
     });
   }, []);
 
@@ -208,12 +217,16 @@ export default function Reader(props: ReaderProps) {
             if (interaction.current.panel || (event.target as Element)?.closest?.('input,textarea,select,[contenteditable]')) return;
             if (event.key === 'ArrowRight') { event.preventDefault(); void turnRef.current(1); }
             if (event.key === 'ArrowLeft') { event.preventDefault(); void turnRef.current(-1); }
-            if (event.key === 'Escape') callbacks.current.onClose();
+            if (event.key === 'Escape') {
+              if (!interaction.current.chromeVisible) setChromeVisible(true);
+              else callbacks.current.onClose();
+            }
           });
           bindReaderGestures(contents.document, {
             bounds: () => readingArea.current?.getBoundingClientRect(), enabled: gesturesEnabled,
             frame: contents.document.defaultView?.frameElement as HTMLIFrameElement,
             turn: direction => { void turnRef.current(direction); },
+            toggleControls: () => setChromeVisible(visible => !visible),
           });
         });
         reader.on('relocated', (location: EpubLocation) => {
@@ -333,7 +346,10 @@ export default function Reader(props: ReaderProps) {
       if ((event.target as HTMLElement)?.matches('input,select,textarea') || panel) return;
       if (event.key === 'ArrowRight') { event.preventDefault(); void turn(settings.comicDirection === 'rtl' && book.format === 'cbz' ? -1 : 1); }
       if (event.key === 'ArrowLeft') { event.preventDefault(); void turn(settings.comicDirection === 'rtl' && book.format === 'cbz' ? 1 : -1); }
-      if (event.key === 'Escape') callbacks.current.onClose();
+      if (event.key === 'Escape') {
+        if (!interaction.current.chromeVisible) setChromeVisible(true);
+        else callbacks.current.onClose();
+      }
     };
     window.addEventListener('keydown', keyboard);
     return () => window.removeEventListener('keydown', keyboard);
@@ -348,8 +364,9 @@ export default function Reader(props: ReaderProps) {
   const controlsDisabled = loading || !!error || turning;
   const setLayout = (value: 'single' | 'double') => props.onSettings({ ...settings, [book.format === 'cbz' ? 'comicLayout' : 'epubLayout']: value });
 
-  return <div ref={dialog} className={`reader rd-theme-${settings.theme} ${double ? 'rd-spread-mode' : ''} ${turning ? 'rd-is-turning' : ''} ${zoom > 1 ? 'rd-is-zoomed' : ''}`} data-layout={double ? 'double' : 'single'} data-animation={settings.pageAnimation} role="dialog" aria-label={`Đọc ${book.title}`} aria-modal="true" tabIndex={-1}>
-    <header className="rd-header" inert={!!panel}>
+  return <div ref={dialog} className={`reader rd-theme-${settings.theme} ${double ? 'rd-spread-mode' : ''} ${turning ? 'rd-is-turning' : ''} ${zoom > 1 ? 'rd-is-zoomed' : ''}`} data-layout={double ? 'double' : 'single'} data-animation={settings.pageAnimation} data-chrome={chromeVisible ? 'visible' : 'hidden'} role="dialog" aria-label={`Đọc ${book.title}`} aria-modal="true" tabIndex={-1}>
+    {!chromeVisible && <button className="rd-restore-controls" onClick={() => setChromeVisible(true)}>Hiện thanh điều khiển</button>}
+    <header className="rd-header" inert={!!panel || !chromeVisible} aria-hidden={!chromeVisible}>
       <button className="rd-icon-button rd-back" onClick={props.onClose} aria-label="Về thư viện"><ArrowLeft size={21}/><span>Thư viện</span></button>
       <div className="rd-book-title"><strong>{book.title}</strong></div>
       <div className="rd-header-actions">
@@ -371,10 +388,10 @@ export default function Reader(props: ReaderProps) {
       {!loading && !error && zoom === 1 && <div className="rd-edge-guides" aria-hidden="true"><span><ChevronLeft size={22}/></span><span><ChevronRight size={22}/></span></div>}
       {loading && <div className="rd-status" role="status"><LoaderCircle className="rd-spin" size={28}/><strong>Đang mở sách…</strong></div>}
       {error && <div className="rd-status rd-error" role="alert"><BookOpen size={32}/><h2>Chưa mở được sách</h2><p>{error}</p><button className="rd-primary" onClick={props.onClose}>Về thư viện</button></div>}
-      {book.format === 'cbz' && !loading && !error && <div className="rd-zoom-controls"><button className="rd-icon-button" aria-label="Thu nhỏ ảnh" disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.5))}><ZoomOut size={18}/></button><span>{Math.round(zoom * 100)}%</span><button className="rd-icon-button" aria-label="Phóng to ảnh" disabled={zoom >= 3} onClick={() => setZoom(value => Math.min(3, value + 0.5))}><ZoomIn size={18}/></button></div>}
+      {book.format === 'cbz' && !loading && !error && <div className="rd-zoom-controls" inert={!chromeVisible} aria-hidden={!chromeVisible}><button className="rd-icon-button" aria-label="Thu nhỏ ảnh" disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.5))}><ZoomOut size={18}/></button><span>{Math.round(zoom * 100)}%</span><button className="rd-icon-button" aria-label="Phóng to ảnh" disabled={zoom >= 3} onClick={() => setZoom(value => Math.min(3, value + 0.5))}><ZoomIn size={18}/></button></div>}
     </main>
 
-    <footer className={`rd-footer ${landscape ? 'rd-footer-wide' : ''}`} inert={!!panel}>
+    <footer className={`rd-footer ${landscape ? 'rd-footer-wide' : ''}`} inert={!!panel || !chromeVisible} aria-hidden={!chromeVisible}>
       <div className="rd-progress-track"><div style={{ width: `${Math.round(position.progress * 100)}%` }}/></div>
       <div className="rd-footer-row">
       {landscape && <div className="rd-layout-bar" role="group" aria-label={`Bố cục đọc ${book.format.toUpperCase()}`}><div className="rd-layout-switch"><button disabled={turning} aria-label="Đọc một trang" aria-pressed={layout === 'single'} onClick={() => setLayout('single')}>1 trang</button><button disabled={turning} aria-label="Đọc hai trang" aria-pressed={layout === 'double'} onClick={() => setLayout('double')}>2 trang</button></div></div>}
@@ -395,7 +412,7 @@ export default function Reader(props: ReaderProps) {
           {panel === 'settings' && <>
             <div className="rd-setting"><label>Màu trang</label><div className="rd-themes">{(['paper', 'sepia', 'dark'] as Theme[]).map(theme => <button key={theme} className={`rd-theme-choice rd-choice-${theme} ${settings.theme === theme ? 'rd-chosen' : ''}`} onClick={() => props.onSettings({ ...settings, theme })}><span>Aa</span><small>{theme === 'paper' ? 'Sáng' : theme === 'sepia' ? 'Giấy ngà' : 'Tối'}</small>{settings.theme === theme && <Check size={15}/>}</button>)}</div></div>
             <div className="rd-setting"><label>Bố cục khi xoay ngang</label><div className="rd-direction"><button disabled={turning} aria-pressed={layout === 'single'} className={layout === 'single' ? 'rd-selected' : ''} onClick={() => setLayout('single')}>Một trang</button><button disabled={turning} aria-pressed={layout === 'double'} className={layout === 'double' ? 'rd-selected' : ''} onClick={() => setLayout('double')}>Hai trang</button></div><p className="rd-hint">Màn hình dọc hiện một trang. Xoay ngang để đọc hai trang cạnh nhau.</p></div>
-            <div className="rd-setting"><label>Chuyển trang</label><div className="rd-direction rd-animation-options">{([{ id: 'curl', name: 'Lật sách' }, { id: 'slide', name: 'Trượt' }, { id: 'none', name: 'Không' }] as const).map(option => <button key={option.id} aria-pressed={settings.pageAnimation === option.id} className={settings.pageAnimation === option.id ? 'rd-selected' : ''} onClick={() => props.onSettings({ ...settings, pageAnimation: option.id })}>{option.name}</button>)}</div><p className="rd-hint">Chạm mép trái/phải hoặc vuốt ngang để chuyển trang. Giảm chuyển động của thiết bị sẽ tắt hiệu ứng lật.</p></div>
+            <div className="rd-setting"><label>Chuyển trang</label><div className="rd-direction rd-animation-options">{([{ id: 'curl', name: 'Lật sách' }, { id: 'slide', name: 'Trượt' }, { id: 'none', name: 'Không' }] as const).map(option => <button key={option.id} aria-pressed={settings.pageAnimation === option.id} className={settings.pageAnimation === option.id ? 'rd-selected' : ''} onClick={() => props.onSettings({ ...settings, pageAnimation: option.id })}>{option.name}</button>)}</div><p className="rd-hint">Chạm giữa trang để ẩn hoặc hiện thanh điều khiển. Chạm mép trái/phải hoặc vuốt ngang để chuyển trang. Giảm chuyển động của thiết bị sẽ tắt hiệu ứng.</p></div>
             {book.format === 'epub' ? <>
               <div className="rd-setting"><label>Cỡ chữ <span>{settings.fontSize}px</span></label><div className="rd-stepper"><button className="rd-icon-button" aria-label="Giảm cỡ chữ" disabled={settings.fontSize <= 14} onClick={() => props.onSettings({ ...settings, fontSize: Math.max(14, settings.fontSize - 1) })}><Minus size={18}/></button><span style={{ fontFamily: '"Times New Roman", "Noto Serif", serif', fontSize: settings.fontSize }}>Văn bản xem trước</span><button className="rd-icon-button" aria-label="Tăng cỡ chữ" disabled={settings.fontSize >= 30} onClick={() => props.onSettings({ ...settings, fontSize: Math.min(30, settings.fontSize + 1) })}><Plus size={18}/></button></div></div>
               <div className="rd-setting"><label>Giãn dòng <span>{settings.lineHeight.toFixed(1)}</span></label><input aria-label="Giãn dòng" type="range" min="1.3" max="2.2" step="0.1" value={settings.lineHeight} onChange={event => props.onSettings({ ...settings, lineHeight: Number(event.target.value) })}/></div>

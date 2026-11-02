@@ -2,15 +2,17 @@
 
 ## Đã xác nhận
 
-- TypeScript: `tsc --noEmit` thành công.
+- TypeScript: `tsc -b` thành công.
 - Vite production build: thành công.
-- Vitest: 67/67 kiểm thử, gồm 24 kiểm thử EPUB/ZIP/CBZ, 22 kiểm thử lưu trữ, 15 kiểm thử bố cục CBZ và 6 kiểm thử thao tác chạm/vuốt.
+- Vitest: 69/69 kiểm thử, gồm 24 kiểm thử EPUB/ZIP/CBZ, 22 kiểm thử lưu trữ, 15 kiểm thử bố cục CBZ và 8 kiểm thử thao tác chạm/vuốt/ẩn thanh điều khiển.
 - Capacitor: đã tạo project Android và iOS, đồng bộ tài nguyên web cùng 3 plugin App, Filesystem, Preferences.
 - Ảnh icon/splash iOS và Android đã thay bằng nhận diện sách mở; privacy manifest iOS được đưa vào Xcode Resources.
 
 ## Thao tác đã thử trong trình duyệt
 
-Bản 1.1.1: 25 tình huống đã qua trên Edge/Chromium với màn hình 360px, 390px, ngang 844×390 và 1180×820. Gồm EPUB hai cột thật, đổi một/hai trang, xoay màn hình, chạm bên trong iframe EPUB, vuốt/chạm CBZ, manga, trang cuối lẻ, phóng to, chạm liên tiếp, giữ tay lâu, ba kiểu hiệu ứng, Giảm chuyển động, lưu tuỳ chỉnh/dấu trang, đọc offline và đóng trình đọc giữa lúc lật. Không có ngoại lệ JavaScript. Đã xem ảnh giao diện trống/có sách, sáng/tối và trình đọc ngang; không tràn ngang tại 360, 390, 600, 844 và 1180px. Ở khung 844×390, vùng đọc cao 294px; các nút đọc vẫn có vùng chạm tối thiểu 44px.
+Bản 1.2.0: 35 tình huống đã qua trên Edge/Chromium. Gồm EPUB hai cột thật, đổi một/hai trang, xoay màn hình, chạm bên trong iframe EPUB, vuốt/chạm CBZ, manga, trang cuối lẻ, phóng to, chạm liên tiếp, giữ tay lâu, ba kiểu hiệu ứng, Giảm chuyển động, lưu tuỳ chỉnh/dấu trang, đọc offline và đóng trình đọc giữa lúc lật. Kiểm tra mới xác nhận chạm giữa trang ẩn/hiện thanh công cụ, mở rộng vùng đọc, giữ khu vực đang đọc, chuyển trang khi toàn màn hình, xoay máy khi ẩn thanh công cụ, khôi phục bằng Escape hoặc bàn phím và luôn hiện điều khiển khi mở lại sách. Thanh ẩn dùng `inert` để loại các nút khỏi điều hướng bàn phím.
+
+Không có ngoại lệ JavaScript. Đã xem ảnh thư viện trống/có sách, bảng kính mờ sáng/tối và trình đọc hiện/ẩn thanh công cụ. Bố cục không tràn ngang tại các chiều rộng 360, 390, 600, 601, 607, 768, 844 và 1180px. Các nút đọc có vùng chạm tối thiểu 44px. Sách dùng để kiểm tra được nhập riêng trong ngữ cảnh trình duyệt tạm; không đóng gói trong ứng dụng.
 
 Edge/Chromium tự động. Lượt kiểm tra trước đã xác nhận nhập tệp, phân trang EPUB, tìm kiếm, xóa sách và lưu dữ liệu. Lượt kiểm tra mới với Liquid Glass và CBZ hai trang xác nhận 17 tình huống dưới đây trên desktop 1440px, mobile 390px/360px và landscape 844×390:
 
