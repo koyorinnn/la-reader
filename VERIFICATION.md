@@ -14,41 +14,15 @@ Bản 1.2.0: 35 tình huống đã qua trên Edge/Chromium. Gồm EPUB hai cột
 
 Không có ngoại lệ JavaScript. Đã xem ảnh thư viện trống/có sách, bảng kính mờ sáng/tối và trình đọc hiện/ẩn thanh công cụ. Bố cục không tràn ngang tại các chiều rộng 360, 390, 600, 601, 607, 768, 844 và 1180px. Các nút đọc có vùng chạm tối thiểu 44px. Sách dùng để kiểm tra được nhập riêng trong ngữ cảnh trình duyệt tạm; không đóng gói trong ứng dụng.
 
-Edge/Chromium tự động. Lượt kiểm tra trước đã xác nhận nhập tệp, phân trang EPUB, tìm kiếm, xóa sách và lưu dữ liệu. Lượt kiểm tra mới với Liquid Glass và CBZ hai trang xác nhận 17 tình huống dưới đây trên desktop 1440px, mobile 390px/360px và landscape 844×390:
-
-1. Không còn khu sách mẫu hoặc request tải sách mẫu.
-2. Thanh điều hướng Liquid Glass có hiệu ứng blur.
-3. Màn hình dọc chỉ hiển thị một trang.
-4. Chọn hai trang khi nằm ngang, hiển thị cặp đầu.
-5. Chuyển tới cặp kế tiếp và lưu vị trí.
-6. Phóng to vẫn giữ hai trang.
-7. Trang cuối lẻ hiện riêng, nút tiếp bị vô hiệu hóa.
-8. Xoay màn hình giữ đúng trang vừa chọn.
-9. Xoay ngang lại khôi phục lựa chọn hai trang.
-10. Chọn một trang khi nằm ngang, chuyển từng trang.
-11. RTL đảo vị trí hai trang và hướng phím điều khiển.
-12. Tải lại app giữ bố cục, vị trí, dấu trang và RTL.
-13. Chuyển trang khi ngắt mạng.
-14. CBZ chỉ có một trang hoạt động đúng ở chế độ hai trang.
-15. Tự dọn dữ liệu sách mẫu cũ và giữ sách người dùng đã nhập.
-16. Giao diện 360px không tràn ngang.
-17. Nội dung EPUB vẫn hiển thị đúng sau thay đổi.
-
-Không ghi nhận ngoại lệ JavaScript trong lượt kiểm tra cuối. Bản web không có service worker: cần máy chủ để tải app lần đầu hoặc tải lại app. App native chứa sẵn tài nguyên web trong gói cài đặt.
+Bản web không có service worker: cần máy chủ để tải app lần đầu hoặc tải lại app. App native chứa sẵn tài nguyên web trong gói cài đặt.
 
 ## Build GitHub đã xác nhận
 
-Bản 1.1.0: [lần chạy 41393350503](https://github.com/koyorinnn/la-reader/actions/runs/41393350503), mã nguồn `f51f9669204e1bca9b4767872c5be63874ea65cc`, đã qua 67 kiểm thử và cả ba job web/Android/iOS. APK và IPA tải về được đối chiếu SHA-256; gói chứa `epubLayout`, `pageAnimation` và CSS Transparent Glass. IPA xác nhận phiên bản 1.1.0, build 2 và nền tảng iPhoneOS.
+Bản 1.2.0: [lần chạy 41460894338](https://github.com/koyorinnn/la-reader/actions/runs/41460894338), mã nguồn `e7f146cef3ea3dd3d13c914415a584695fff649c`, đã qua 69 kiểm thử và cả ba job web/Android/iOS. APK và IPA tải về được đối chiếu SHA-256, kiểm tra ZIP và tài nguyên của bản mới: `epubLayout`, `pageAnimation`, `rd-footer-wide` cùng CSS kính mờ và chuyển động.
 
-Đã kiểm tra [lần chạy 40907874320](https://github.com/koyorinnn/la-reader/actions/runs/40907874320), mã nguồn `c18ca2a7246d60a35fa7c6ee2e45014cc39b2ee5`. Cả ba job hoàn tất thành công:
-
-- Tests and web build: 61 kiểm thử và production build.
-- Android debug APK: đã biên dịch và tải lên `la-reader-android-debug` chứa `app-debug.apk`.
-- iOS simulator and unsigned archive: đã biên dịch bản Simulator và archive thiết bị chưa ký, tải lên `la-reader-ios`.
-
-Lần chạy đầu gặp lỗi công cụ Android SDK chưa nằm trong PATH. Workflow hiện cài SDK tools trước khi gọi `sdkmanager`; lần chạy trên đã xác nhận bản sửa.
-
-Lần chạy bổ sung [41003932498](https://github.com/koyorinnn/la-reader/actions/runs/41003932498), mã nguồn `d35331cade1af60026a6e8f778b32978fdec54c6`, đã hoàn tất cả ba job và tạo thêm `LaReader-unsigned.ipa`. Đã tải artifact, đối chiếu SHA-256 với GitHub, kiểm tra ZIP, cấu trúc `Payload/App.app`, executable Mach-O, nền tảng `iPhoneOS`, bundle ID, tài nguyên web và privacy manifest. File này chưa được ký để cài lên thiết bị.
+- Android: `app-debug.apk`, chứa manifest, executable và tài nguyên web.
+- iOS: bản Simulator, archive thiết bị và `LaReader-unsigned.ipa`. IPA chứa `Payload/App.app`, bundle ID `app.la.reader`, phiên bản 1.2.0, build 4, nền tảng `iPhoneOS` và privacy manifest.
+- Các gói không chứa sách mẫu. IPA chưa ký để cài lên thiết bị.
 
 ## Chưa xác nhận
 

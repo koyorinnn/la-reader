@@ -45,4 +45,4 @@ Tài liệu tham chiếu: [môi trường Capacitor](https://capacitorjs.com/doc
 
 ## Trạng thái xác minh
 
-Đã xác nhận cả ba job của bản 1.1.0 thành công tại [lần chạy 41393350503](https://github.com/koyorinnn/la-reader/actions/runs/41393350503), mã nguồn `f51f9669204e1bca9b4767872c5be63874ea65cc`. Các artifact Android, iOS, IPA chưa ký và web đã được tạo. Đăng nhập GitHub để tải trong mục **Artifacts**; nếu artifact hết hạn, chạy lại workflow. Xem `VERIFICATION.md` để biết phạm vi kiểm tra.
+Đã xác nhận cả ba job của bản 1.2.0 thành công tại [lần chạy 41460894338](https://github.com/koyorinnn/la-reader/actions/runs/41460894338), mã nguồn `e7f146cef3ea3dd3d13c914415a584695fff649c`. Các artifact Android, iOS, IPA chưa ký và web đã được tạo. APK và IPA tải về được đối chiếu SHA-256 và kiểm tra tài nguyên giao diện mới. IPA xác nhận phiên bản 1.2.0, build 4, nền tảng iPhoneOS. Đăng nhập GitHub để tải trong mục **Artifacts**; nếu artifact hết hạn, chạy lại workflow. Xem `VERIFICATION.md` để biết phạm vi kiểm tra.
