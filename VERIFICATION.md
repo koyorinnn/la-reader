@@ -36,6 +36,8 @@ Không ghi nhận ngoại lệ JavaScript trong lượt kiểm tra cuối. Bản
 
 ## Build GitHub đã xác nhận
 
+Bản 1.1.0: [lần chạy 41393350503](https://github.com/koyorinnn/la-reader/actions/runs/41393350503), mã nguồn `f51f9669204e1bca9b4767872c5be63874ea65cc`, đã qua 67 kiểm thử và cả ba job web/Android/iOS. APK và IPA tải về được đối chiếu SHA-256; gói chứa `epubLayout`, `pageAnimation` và CSS Transparent Glass. IPA xác nhận phiên bản 1.1.0, build 2 và nền tảng iPhoneOS.
+
 Đã kiểm tra [lần chạy 40907874320](https://github.com/koyorinnn/la-reader/actions/runs/40907874320), mã nguồn `c18ca2a7246d60a35fa7c6ee2e45014cc39b2ee5`. Cả ba job hoàn tất thành công:
 
 - Tests and web build: 61 kiểm thử và production build.
