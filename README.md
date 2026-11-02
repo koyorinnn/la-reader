@@ -2,7 +2,7 @@
 
 App đọc sách EPUB và truyện tranh CBZ offline, giao diện tiếng Việt. Mã nguồn React + TypeScript, đóng gói ứng dụng iOS và Android bằng Capacitor 8.
 
-Phiên bản 1.1.0 có giao diện Transparent Glass: thanh điều khiển trong suốt, viền sáng và chuyển động nhẹ; trang sách giữ nền rõ để dễ đọc. Thư viện bắt đầu trống, không kèm sách mẫu.
+Phiên bản 1.1.1 tinh gọn giao diện: nền phẳng, thư viện không có khung trang trí, kính mờ nhẹ ở thanh điều khiển và chuyển động ngắn khi mở bảng. Thanh đọc gộp chọn bố cục và chuyển trang vào một hàng để dành thêm diện tích cho sách. Thư viện bắt đầu trống, không kèm sách mẫu.
 
 - EPUB và CBZ đều chọn được một hoặc hai trang khi xoay ngang. EPUB dàn chữ thành hai trang, màn hình dọc tự trở về một trang.
 - Chạm mép trái/phải hoặc vuốt ngang để chuyển trang; chiều đọc manga đảo hướng tương ứng.

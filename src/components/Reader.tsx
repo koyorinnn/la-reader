@@ -351,7 +351,7 @@ export default function Reader(props: ReaderProps) {
   return <div ref={dialog} className={`reader rd-theme-${settings.theme} ${double ? 'rd-spread-mode' : ''} ${turning ? 'rd-is-turning' : ''} ${zoom > 1 ? 'rd-is-zoomed' : ''}`} data-layout={double ? 'double' : 'single'} data-animation={settings.pageAnimation} role="dialog" aria-label={`Đọc ${book.title}`} aria-modal="true" tabIndex={-1}>
     <header className="rd-header" inert={!!panel}>
       <button className="rd-icon-button rd-back" onClick={props.onClose} aria-label="Về thư viện"><ArrowLeft size={21}/><span>Thư viện</span></button>
-      <div className="rd-book-title"><strong>{book.title}</strong><span>{book.author || 'Tác giả chưa rõ'}</span></div>
+      <div className="rd-book-title"><strong>{book.title}</strong></div>
       <div className="rd-header-actions">
         <button className={`rd-icon-button ${isBookmarked ? 'rd-active' : ''}`} disabled={!position.location || loading || !!error} onClick={() => props.onBookmark(position)} aria-label={isBookmarked ? 'Bỏ dấu trang hiện tại' : 'Đánh dấu trang'} title={isBookmarked ? 'Bỏ dấu trang hiện tại' : 'Đánh dấu trang'}><Bookmark size={20} fill={isBookmarked ? 'currentColor' : 'none'}/></button>
         <button className="rd-icon-button" onClick={() => setPanel('contents')} aria-label={book.format === 'cbz' ? 'Đi đến trang' : 'Mục lục'}><List size={21}/></button>
@@ -374,10 +374,10 @@ export default function Reader(props: ReaderProps) {
       {book.format === 'cbz' && !loading && !error && <div className="rd-zoom-controls"><button className="rd-icon-button" aria-label="Thu nhỏ ảnh" disabled={zoom <= 1} onClick={() => setZoom(value => Math.max(1, value - 0.5))}><ZoomOut size={18}/></button><span>{Math.round(zoom * 100)}%</span><button className="rd-icon-button" aria-label="Phóng to ảnh" disabled={zoom >= 3} onClick={() => setZoom(value => Math.min(3, value + 0.5))}><ZoomIn size={18}/></button></div>}
     </main>
 
-    <footer className="rd-footer" inert={!!panel}>
+    <footer className={`rd-footer ${landscape ? 'rd-footer-wide' : ''}`} inert={!!panel}>
       <div className="rd-progress-track"><div style={{ width: `${Math.round(position.progress * 100)}%` }}/></div>
-      {landscape && <div className="rd-layout-bar" role="group" aria-label={`Bố cục đọc ${book.format.toUpperCase()}`}><div className="rd-layout-switch"><button disabled={turning} aria-label="Đọc một trang" aria-pressed={layout === 'single'} onClick={() => setLayout('single')}>1 trang</button><button disabled={turning} aria-label="Đọc hai trang" aria-pressed={layout === 'double'} onClick={() => setLayout('double')}>2 trang</button></div></div>}
       <div className="rd-footer-row">
+      {landscape && <div className="rd-layout-bar" role="group" aria-label={`Bố cục đọc ${book.format.toUpperCase()}`}><div className="rd-layout-switch"><button disabled={turning} aria-label="Đọc một trang" aria-pressed={layout === 'single'} onClick={() => setLayout('single')}>1 trang</button><button disabled={turning} aria-label="Đọc hai trang" aria-pressed={layout === 'double'} onClick={() => setLayout('double')}>2 trang</button></div></div>}
         <button className="rd-turn" onClick={() => void turn(rtl ? 1 : -1)} disabled={controlsDisabled || (rtl ? boundaries.last : boundaries.first)} aria-label={rtl ? 'Trang tiếp theo' : 'Trang trước'}><ChevronLeft size={22}/><span>{rtl ? 'Tiếp' : 'Trước'}</span></button>
         <button className="rd-location" onClick={() => setPanel('contents')} disabled={loading || !!error}><span>{position.label}</span><small>{Math.round(position.progress * 100)}% đã đọc</small></button>
         <button className="rd-turn" onClick={() => void turn(rtl ? -1 : 1)} disabled={controlsDisabled || (rtl ? boundaries.first : boundaries.last)} aria-label={rtl ? 'Trang trước' : 'Trang tiếp theo'}><span>{rtl ? 'Trước' : 'Tiếp'}</span><ChevronRight size={22}/></button>

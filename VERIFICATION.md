@@ -10,7 +10,7 @@
 
 ## Thao tác đã thử trong trình duyệt
 
-Bản 1.1.0 Transparent Glass: 25 tình huống đã qua trên Edge/Chromium với màn hình 360px, 390px, ngang 844×390 và 1180×820. Gồm EPUB hai cột thật, đổi một/hai trang, xoay màn hình, chạm bên trong iframe EPUB, vuốt/chạm CBZ, manga, trang cuối lẻ, phóng to, chạm liên tiếp, giữ tay lâu, ba kiểu hiệu ứng, Giảm chuyển động, lưu tuỳ chỉnh/dấu trang, đọc offline và đóng trình đọc giữa lúc lật. Không có ngoại lệ JavaScript. Ảnh chụp được kiểm tra để chỉnh màu chữ và mặt giấy trong hiệu ứng lật.
+Bản 1.1.1: 25 tình huống đã qua trên Edge/Chromium với màn hình 360px, 390px, ngang 844×390 và 1180×820. Gồm EPUB hai cột thật, đổi một/hai trang, xoay màn hình, chạm bên trong iframe EPUB, vuốt/chạm CBZ, manga, trang cuối lẻ, phóng to, chạm liên tiếp, giữ tay lâu, ba kiểu hiệu ứng, Giảm chuyển động, lưu tuỳ chỉnh/dấu trang, đọc offline và đóng trình đọc giữa lúc lật. Không có ngoại lệ JavaScript. Đã xem ảnh giao diện trống/có sách, sáng/tối và trình đọc ngang; không tràn ngang tại 360, 390, 600, 844 và 1180px. Ở khung 844×390, vùng đọc cao 294px; các nút đọc vẫn có vùng chạm tối thiểu 44px.
 
 Edge/Chromium tự động. Lượt kiểm tra trước đã xác nhận nhập tệp, phân trang EPUB, tìm kiếm, xóa sách và lưu dữ liệu. Lượt kiểm tra mới với Liquid Glass và CBZ hai trang xác nhận 17 tình huống dưới đây trên desktop 1440px, mobile 390px/360px và landscape 844×390:
 
