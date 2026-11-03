@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ePub from 'epubjs';
-import { ArrowLeft, Bookmark, BookOpen, Check, ChevronLeft, ChevronRight, List, LoaderCircle, Minus, Plus, Settings2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, Bookmark, BookOpen, Check, ChevronLeft, ChevronRight, List, LoaderCircle, Minus, Minimize2, Plus, Settings2, X, ZoomIn, ZoomOut } from 'lucide-react';
 import type { ReaderProps, ReadingPosition, Theme } from '../types';
 import { listComicPages, readArchiveEntry } from '../lib/archive';
 import { getComicSpread, turnComicPage } from '../lib/comic-layout';
+import { protectEpubDocument } from '../lib/epub-document';
 import { bindReaderGestures } from '../lib/reader-input';
 import { animatePageTurn } from '../lib/page-turn';
 import './reader.css';
@@ -32,21 +33,6 @@ function imageMime(path: string) {
 }
 function readableError(error: unknown) {
   return error instanceof Error ? error.message : 'Không thể mở nội dung sách. Hãy thử nhập lại tệp.';
-}
-
-// This runs before a spine document is serialized into its sandboxed iframe.
-function protectDocument(document: Document) {
-  document.querySelectorAll('script,iframe,object,embed,form,meta[http-equiv="refresh"]').forEach(element => element.remove());
-  document.querySelectorAll('*').forEach(element => {
-    for (const attribute of [...element.attributes]) {
-      if (/^on/i.test(attribute.name) || /^(?:javascript|vbscript):/i.test(attribute.value.trim())) element.removeAttribute(attribute.name);
-      if (['src', 'href', 'xlink:href', 'poster'].includes(attribute.name) && /^(?:https?:)?\/\//i.test(attribute.value.trim()) && !['a', 'base'].includes(element.tagName.toLowerCase())) element.removeAttribute(attribute.name);
-    }
-  });
-  const csp = document.createElement('meta');
-  csp.setAttribute('http-equiv', 'Content-Security-Policy');
-  csp.setAttribute('content', "default-src 'none'; img-src blob: data:; style-src 'unsafe-inline' blob: data:; font-src blob: data:; media-src blob: data:; form-action 'none'; base-uri 'self'");
-  document.querySelector('head')?.prepend(csp);
 }
 
 export default function Reader(props: ReaderProps) {
@@ -190,7 +176,7 @@ export default function Reader(props: ReaderProps) {
         if (!alive) return;
         instance = ePub({ replacements: 'blobUrl' });
         epub.current = instance;
-        instance.spine.hooks.content.register(protectDocument);
+        instance.spine.hooks.content.register(protectEpubDocument);
         opening = instance.open(data.slice(0)).then(() => Promise.all([instance!.ready, instance!.opened]));
         await Promise.race([opening, new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('Mở sách quá lâu. Tệp có thể thiếu chương hoặc tài nguyên. Hãy kiểm tra và nhập lại EPUB.')), 25000); })]);
         if (timeout) clearTimeout(timeout);
@@ -202,7 +188,9 @@ export default function Reader(props: ReaderProps) {
         setToc(entries);
         reader = instance.renderTo(element, {
           width: '100%', height: '100%', flow: 'paginated', spread: interaction.current.double ? 'always' : 'none', minSpreadWidth: 1,
-          allowScriptedContent: false,
+          // WebKit suppresses parent-owned handlers in a script-disabled frame.
+          // protectEpubDocument strips active content and enforces script-src none.
+          allowScriptedContent: true,
         });
         rendition.current = reader;
         reader.hooks.content.register((contents: { document: Document }) => {
@@ -364,12 +352,13 @@ export default function Reader(props: ReaderProps) {
   const controlsDisabled = loading || !!error || turning;
   const setLayout = (value: 'single' | 'double') => props.onSettings({ ...settings, [book.format === 'cbz' ? 'comicLayout' : 'epubLayout']: value });
 
-  return <div ref={dialog} className={`reader rd-theme-${settings.theme} ${double ? 'rd-spread-mode' : ''} ${turning ? 'rd-is-turning' : ''} ${zoom > 1 ? 'rd-is-zoomed' : ''}`} data-layout={double ? 'double' : 'single'} data-animation={settings.pageAnimation} data-chrome={chromeVisible ? 'visible' : 'hidden'} role="dialog" aria-label={`Đọc ${book.title}`} aria-modal="true" tabIndex={-1}>
+  return <div ref={dialog} className={`reader rd-theme-${settings.theme} ${double ? 'rd-spread-mode' : ''} ${turning ? 'rd-is-turning' : ''} ${zoom > 1 ? 'rd-is-zoomed' : ''}`} data-layout={double ? 'double' : 'single'} data-animation={settings.pageAnimation} data-panel={panel || undefined} data-chrome={chromeVisible ? 'visible' : 'hidden'} role="dialog" aria-label={`Đọc ${book.title}`} aria-modal="true" tabIndex={-1}>
     {!chromeVisible && <button className="rd-restore-controls" onClick={() => setChromeVisible(true)}>Hiện thanh điều khiển</button>}
     <header className="rd-header" inert={!!panel || !chromeVisible} aria-hidden={!chromeVisible}>
       <button className="rd-icon-button rd-back" onClick={props.onClose} aria-label="Về thư viện"><ArrowLeft size={21}/><span>Thư viện</span></button>
       <div className="rd-book-title"><strong>{book.title}</strong></div>
       <div className="rd-header-actions">
+        <button className="rd-icon-button rd-hide-controls" disabled={loading || !!error || turning} onClick={() => setChromeVisible(false)} aria-label="Ẩn thanh điều khiển" title="Ẩn thanh điều khiển"><Minimize2 size={19}/></button>
         <button className={`rd-icon-button ${isBookmarked ? 'rd-active' : ''}`} disabled={!position.location || loading || !!error} onClick={() => props.onBookmark(position)} aria-label={isBookmarked ? 'Bỏ dấu trang hiện tại' : 'Đánh dấu trang'} title={isBookmarked ? 'Bỏ dấu trang hiện tại' : 'Đánh dấu trang'}><Bookmark size={20} fill={isBookmarked ? 'currentColor' : 'none'}/></button>
         <button className="rd-icon-button" onClick={() => setPanel('contents')} aria-label={book.format === 'cbz' ? 'Đi đến trang' : 'Mục lục'}><List size={21}/></button>
         <button className="rd-icon-button" onClick={() => setPanel('settings')} aria-label="Cài đặt đọc"><Settings2 size={20}/></button>
@@ -412,7 +401,7 @@ export default function Reader(props: ReaderProps) {
           {panel === 'settings' && <>
             <div className="rd-setting"><label>Màu trang</label><div className="rd-themes">{(['paper', 'sepia', 'dark'] as Theme[]).map(theme => <button key={theme} className={`rd-theme-choice rd-choice-${theme} ${settings.theme === theme ? 'rd-chosen' : ''}`} onClick={() => props.onSettings({ ...settings, theme })}><span>Aa</span><small>{theme === 'paper' ? 'Sáng' : theme === 'sepia' ? 'Giấy ngà' : 'Tối'}</small>{settings.theme === theme && <Check size={15}/>}</button>)}</div></div>
             <div className="rd-setting"><label>Bố cục khi xoay ngang</label><div className="rd-direction"><button disabled={turning} aria-pressed={layout === 'single'} className={layout === 'single' ? 'rd-selected' : ''} onClick={() => setLayout('single')}>Một trang</button><button disabled={turning} aria-pressed={layout === 'double'} className={layout === 'double' ? 'rd-selected' : ''} onClick={() => setLayout('double')}>Hai trang</button></div><p className="rd-hint">Màn hình dọc hiện một trang. Xoay ngang để đọc hai trang cạnh nhau.</p></div>
-            <div className="rd-setting"><label>Chuyển trang</label><div className="rd-direction rd-animation-options">{([{ id: 'curl', name: 'Lật sách' }, { id: 'slide', name: 'Trượt' }, { id: 'none', name: 'Không' }] as const).map(option => <button key={option.id} aria-pressed={settings.pageAnimation === option.id} className={settings.pageAnimation === option.id ? 'rd-selected' : ''} onClick={() => props.onSettings({ ...settings, pageAnimation: option.id })}>{option.name}</button>)}</div><p className="rd-hint">Chạm giữa trang để ẩn hoặc hiện thanh điều khiển. Chạm mép trái/phải hoặc vuốt ngang để chuyển trang. Giảm chuyển động của thiết bị sẽ tắt hiệu ứng.</p></div>
+            <div className="rd-setting"><label>Chuyển trang</label><div className="rd-direction rd-animation-options">{([{ id: 'curl', name: 'Lật sách' }, { id: 'slide', name: 'Trượt' }, { id: 'none', name: 'Không' }] as const).map(option => <button key={option.id} aria-pressed={settings.pageAnimation === option.id} className={settings.pageAnimation === option.id ? 'rd-selected' : ''} onClick={() => props.onSettings({ ...settings, pageAnimation: option.id })}>{option.name}</button>)}</div><p className="rd-hint">Chạm vùng giữa màn hình để ẩn hoặc hiện thanh điều khiển. Chạm vùng bên trái/phải hoặc vuốt ngang để chuyển trang. Giảm chuyển động của thiết bị sẽ tắt hiệu ứng.</p></div>
             {book.format === 'epub' ? <>
               <div className="rd-setting"><label>Cỡ chữ <span>{settings.fontSize}px</span></label><div className="rd-stepper"><button className="rd-icon-button" aria-label="Giảm cỡ chữ" disabled={settings.fontSize <= 14} onClick={() => props.onSettings({ ...settings, fontSize: Math.max(14, settings.fontSize - 1) })}><Minus size={18}/></button><span style={{ fontFamily: '"Times New Roman", "Noto Serif", serif', fontSize: settings.fontSize }}>Văn bản xem trước</span><button className="rd-icon-button" aria-label="Tăng cỡ chữ" disabled={settings.fontSize >= 30} onClick={() => props.onSettings({ ...settings, fontSize: Math.min(30, settings.fontSize + 1) })}><Plus size={18}/></button></div></div>
               <div className="rd-setting"><label>Giãn dòng <span>{settings.lineHeight.toFixed(1)}</span></label><input aria-label="Giãn dòng" type="range" min="1.3" max="2.2" step="0.1" value={settings.lineHeight} onChange={event => props.onSettings({ ...settings, lineHeight: Number(event.target.value) })}/></div>

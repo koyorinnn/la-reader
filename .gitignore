@@ -15,3 +15,6 @@ artifacts/
 *.jks
 *.p12
 *.mobileprovision
+
+test-results/
+playwright-report/

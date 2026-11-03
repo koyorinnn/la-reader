@@ -4,11 +4,13 @@
 
 - TypeScript: `tsc -b` thành công.
 - Vite production build: thành công.
-- Vitest: 69/69 kiểm thử, gồm 24 kiểm thử EPUB/ZIP/CBZ, 22 kiểm thử lưu trữ, 15 kiểm thử bố cục CBZ và 8 kiểm thử thao tác chạm/vuốt/ẩn thanh điều khiển.
+- Vitest: 72/72 kiểm thử, gồm 24 kiểm thử EPUB/ZIP/CBZ, 22 kiểm thử lưu trữ, 15 kiểm thử bố cục CBZ 8 kiểm thử thao tác chạm/vuốt/ẩn thanh điều khiển và 3 kiểm thử bảo vệ tài liệu EPUB.
 - Capacitor: đã tạo project Android và iOS, đồng bộ tài nguyên web cùng 3 plugin App, Filesystem, Preferences.
 - Ảnh icon/splash iOS và Android đã thay bằng nhận diện sách mở; privacy manifest iOS được đưa vào Xcode Resources.
 
 ## Thao tác đã thử trong trình duyệt
+
+Bản 1.2.1: đã tái hiện và sửa lỗi EPUB trên WebKit, qua 4 bài hồi quy WebKit và 25 tình huống Chromium; kiểm tra trực quan iPad ngang/dọc, iPad mini, cửa sổ hẹp và iPhone. Chi tiết và giới hạn kiểm tra ở [AUDIT-IOS.md](AUDIT-IOS.md).
 
 Bản 1.2.0: 35 tình huống đã qua trên Edge/Chromium. Gồm EPUB hai cột thật, đổi một/hai trang, xoay màn hình, chạm bên trong iframe EPUB, vuốt/chạm CBZ, manga, trang cuối lẻ, phóng to, chạm liên tiếp, giữ tay lâu, ba kiểu hiệu ứng, Giảm chuyển động, lưu tuỳ chỉnh/dấu trang, đọc offline và đóng trình đọc giữa lúc lật. Kiểm tra mới xác nhận chạm giữa trang ẩn/hiện thanh công cụ, mở rộng vùng đọc, giữ khu vực đang đọc, chuyển trang khi toàn màn hình, xoay máy khi ẩn thanh công cụ, khôi phục bằng Escape hoặc bàn phím và luôn hiện điều khiển khi mở lại sách. Thanh ẩn dùng `inert` để loại các nút khỏi điều hướng bàn phím.
 

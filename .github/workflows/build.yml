@@ -32,6 +32,17 @@ jobs:
           pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build
+      - name: Install WebKit for iPad reader regression tests
+        run: pnpm exec playwright install --with-deps webkit
+      - name: Verify EPUB and CBZ touch input on WebKit
+        run: pnpm test:webkit
+      - name: Upload WebKit traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: la-reader-webkit-traces
+          path: test-results/
+          retention-days: 7
       - name: Upload web build
         uses: actions/upload-artifact@v7
         with:

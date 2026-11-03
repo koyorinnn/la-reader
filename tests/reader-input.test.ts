@@ -8,8 +8,15 @@ describe('reader gestures', () => {
     expect(gestureDirection(start(375), { x: 375, y: 100, time: 120 }, 390)).toBe(1);
     expect(gestureDirection(start(195), { x: 195, y: 100, time: 120 }, 390)).toBeNull();
   });
-  it('does not expand edge taps across a wide desktop page', () => {
-    expect(gestureDirection(start(250), { x: 250, y: 100, time: 100 }, 1400)).toBeNull();
+  it('uses broad side zones on iPad while reserving the center for controls', () => {
+    for (const width of [390, 744, 834, 1024, 1194, 1366]) {
+      const tap = (fraction: number) => gestureDirection(start(width * fraction), { x: width * fraction, y: 100, time: 100 }, width);
+      expect(tap(.25)).toBe(-1);
+      expect(tap(.75)).toBe(1);
+      expect(tap(.4)).toBeNull();
+      expect(tap(.5)).toBeNull();
+      expect(tap(.6)).toBeNull();
+    }
   });
   it('ignores long presses and movements that could be selection or scrolling', () => {
     expect(gestureDirection(start(20), { x: 20, y: 100, time: 650 }, 390)).toBeNull();
