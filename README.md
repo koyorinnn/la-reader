@@ -14,7 +14,7 @@ Xem [kết quả audit iOS/iPadOS và cách chạy kiểm thử WebKit](AUDIT-IO
 
 ## Build trên GitHub
 
-GitHub Actions đã chạy thành công cho bản 1.2.0: 69 kiểm thử, bản web, APK Android debug, iOS Simulator, archive và IPA iOS chưa ký. [Mở bản build đã xác minh](https://github.com/koyorinnn/la-reader/actions/runs/41460894338), tải các tệp trong **Artifacts**. Xem [hướng dẫn build và cài thử](GITHUB.md).
+GitHub Actions đã chạy thành công cho bản 1.2.1: 72 kiểm thử, 4 bài WebKit, bản web, APK Android debug, iOS Simulator, archive và IPA iOS chưa ký. [Mở bản build đã xác minh](https://github.com/koyorinnn/la-reader/actions/runs/41615282658), tải các tệp trong **Artifacts**. Xem [hướng dẫn build và cài thử](GITHUB.md).
 
 Workflow cũng xuất `LaReader-unsigned.ipa` trong artifact **la-reader-ios-unsigned-ipa**. Đây là IPA chưa ký để tự ký lại trước khi cài lên iPhone; tải từ [lần chạy mới nhất](https://github.com/koyorinnn/la-reader/actions/workflows/build.yml).
 

@@ -36,7 +36,7 @@ Muốn GitHub xuất IPA đã ký, cần cấu hình chứng chỉ cùng khóa r
 
 ## Môi trường CI
 
-- Web: Ubuntu 24.04, Node 24, pnpm 11.25.0, cài theo lockfile và chạy toàn bộ kiểm thử trước khi build native.
+- Web: Ubuntu 24.04, Node 24, pnpm 11.25.0, cài theo lockfile, chạy 72 kiểm thử và 4 bài Playwright WebKit trước khi build native.
 - Android: JDK 21, SDK 36, Gradle wrapper kèm repo.
 - iOS: runner `macos-26`, Swift Package Manager và Xcode có sẵn; scheme `App` đã được chia sẻ trong repo.
 - Mỗi artifact được giữ 14 ngày; cấu hình có thể thay đổi trong workflow. Quyền workflow chỉ đọc mã nguồn và tải artifact qua dịch vụ Actions.
@@ -45,4 +45,4 @@ Tài liệu tham chiếu: [môi trường Capacitor](https://capacitorjs.com/doc
 
 ## Trạng thái xác minh
 
-Đã xác nhận cả ba job của bản 1.2.0 thành công tại [lần chạy 41460894338](https://github.com/koyorinnn/la-reader/actions/runs/41460894338), mã nguồn `e7f146cef3ea3dd3d13c914415a584695fff649c`. Các artifact Android, iOS, IPA chưa ký và web đã được tạo. APK và IPA tải về được đối chiếu SHA-256 và kiểm tra tài nguyên giao diện mới. IPA xác nhận phiên bản 1.2.0, build 4, nền tảng iPhoneOS. Đăng nhập GitHub để tải trong mục **Artifacts**; nếu artifact hết hạn, chạy lại workflow. Xem `VERIFICATION.md` để biết phạm vi kiểm tra.
+Đã xác nhận cả ba job của bản 1.2.1 thành công tại [lần chạy 41615282658](https://github.com/koyorinnn/la-reader/actions/runs/41615282658), mã nguồn `fc874e444f18400894147837ecd9df46b8c1aeb4`. Các artifact Android, iOS, IPA chưa ký và web đã được tạo. APK và IPA tải về được đối chiếu SHA-256 và kiểm tra tài nguyên giao diện mới. IPA xác nhận phiên bản 1.2.1, build 4, nền tảng iPhoneOS. Đăng nhập GitHub để tải trong mục **Artifacts**; nếu artifact hết hạn, chạy lại workflow. Xem `VERIFICATION.md` để biết phạm vi kiểm tra.

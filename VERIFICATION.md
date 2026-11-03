@@ -1,35 +1,26 @@
-# Kiểm tra bản bàn giao
+# Kiểm tra bản 1.2.1
 
 ## Đã xác nhận
 
-- TypeScript: `tsc -b` thành công.
-- Vite production build: thành công.
-- Vitest: 72/72 kiểm thử, gồm 24 kiểm thử EPUB/ZIP/CBZ, 22 kiểm thử lưu trữ, 15 kiểm thử bố cục CBZ 8 kiểm thử thao tác chạm/vuốt/ẩn thanh điều khiển và 3 kiểm thử bảo vệ tài liệu EPUB.
-- Capacitor: đã tạo project Android và iOS, đồng bộ tài nguyên web cùng 3 plugin App, Filesystem, Preferences.
-- Ảnh icon/splash iOS và Android đã thay bằng nhận diện sách mở; privacy manifest iOS được đưa vào Xcode Resources.
+- TypeScript: `tsc -b` kiểm tra cả ứng dụng, unit test và bộ Playwright.
+- Vitest: 72/72 (24 EPUB/ZIP/CBZ, 22 lưu trữ, 15 bố cục CBZ, 8 thao tác chạm/vuốt, 3 bảo vệ tài liệu EPUB).
+- Playwright WebKit: 4/4 bài qua cả cục bộ và GitHub Actions, gồm EPUB nhận touch thật ở giữa/hai bên, chặn script, xoay/cửa sổ hẹp và CBZ hai trang.
+- Chromium: 25 tình huống đọc đã qua; không ghi nhận ngoại lệ JavaScript.
+- Kiểm tra ảnh thư viện, trình đọc và bảng cài đặt ở 1194×834, 834×1194, 744×1133, 600×834, 390×844; bộ WebKit kiểm tra thêm 1366×1024. Xác nhận không tràn ngang/panel sau animation.
+- Vite production build và Capacitor sync iOS/Android thành công.
 
-## Thao tác đã thử trong trình duyệt
+Xem [AUDIT-IOS.md](AUDIT-IOS.md) để biết nguyên nhân lỗi EPUB trên WebKit, các sửa đổi giao diện iPad và cách chạy lại kiểm thử. Dữ liệu kiểm thử được tạo hoặc nhập trong trình duyệt tạm; app không kèm sách mẫu.
 
-Bản 1.2.1: đã tái hiện và sửa lỗi EPUB trên WebKit, qua 4 bài hồi quy WebKit và 25 tình huống Chromium; kiểm tra trực quan iPad ngang/dọc, iPad mini, cửa sổ hẹp và iPhone. Chi tiết và giới hạn kiểm tra ở [AUDIT-IOS.md](AUDIT-IOS.md).
+## Gói native
 
-Bản 1.2.0: 35 tình huống đã qua trên Edge/Chromium. Gồm EPUB hai cột thật, đổi một/hai trang, xoay màn hình, chạm bên trong iframe EPUB, vuốt/chạm CBZ, manga, trang cuối lẻ, phóng to, chạm liên tiếp, giữ tay lâu, ba kiểu hiệu ứng, Giảm chuyển động, lưu tuỳ chỉnh/dấu trang, đọc offline và đóng trình đọc giữa lúc lật. Kiểm tra mới xác nhận chạm giữa trang ẩn/hiện thanh công cụ, mở rộng vùng đọc, giữ khu vực đang đọc, chuyển trang khi toàn màn hình, xoay máy khi ẩn thanh công cụ, khôi phục bằng Escape hoặc bàn phím và luôn hiện điều khiển khi mở lại sách. Thanh ẩn dùng `inert` để loại các nút khỏi điều hướng bàn phím.
+[GitHub Actions 41615282658](https://github.com/koyorinnn/la-reader/actions/runs/41615282658) chạy mã nguồn `fc874e444f18400894147837ecd9df46b8c1aeb4`. Cả ba job thành công: kiểm thử/web, APK Android debug, iOS Simulator/archive/IPA chưa ký.
 
-Không có ngoại lệ JavaScript. Đã xem ảnh thư viện trống/có sách, bảng kính mờ sáng/tối và trình đọc hiện/ẩn thanh công cụ. Bố cục không tràn ngang tại các chiều rộng 360, 390, 600, 601, 607, 768, 844 và 1180px. Các nút đọc có vùng chạm tối thiểu 44px. Sách dùng để kiểm tra được nhập riêng trong ngữ cảnh trình duyệt tạm; không đóng gói trong ứng dụng.
+APK và IPA tải về đã được đối chiếu SHA-256 của artifact và kiểm tra ZIP, tài nguyên web của bản sửa, CSP chặn script và nút ẩn thanh điều khiển. IPA xác nhận bundle ID `app.la.reader`, phiên bản 1.2.1, build 5, nền tảng iPhoneOS, `UIDeviceFamily` gồm iPhone và iPad, cùng privacy manifest.
 
-Bản web không có service worker: cần máy chủ để tải app lần đầu hoặc tải lại app. App native chứa sẵn tài nguyên web trong gói cài đặt.
+## Giới hạn
 
-## Build GitHub đã xác nhận
+WebKit trên Windows với viewport/touch mô phỏng không thay thế WKWebView trên thiết bị thật. Chưa chạy trên iPad/iPhone thật, chưa xác minh Apple Pencil, VoiceOver, bàn phím phần cứng, safe-area phần cứng, Stage Manager hoặc nhập tệp qua nhà cung cấp lưu trữ iOS.
 
-Bản 1.2.0: [lần chạy 41460894338](https://github.com/koyorinnn/la-reader/actions/runs/41460894338), mã nguồn `e7f146cef3ea3dd3d13c914415a584695fff649c`, đã qua 69 kiểm thử và cả ba job web/Android/iOS. APK và IPA tải về được đối chiếu SHA-256, kiểm tra ZIP và tài nguyên của bản mới: `epubLayout`, `pageAnimation`, `rd-footer-wide` cùng CSS kính mờ và chuyển động.
+IPA chưa ký; APK dùng khóa debug của runner. Chưa tạo AAB phát hành hoặc phân phối lên TestFlight/App Store/Play Store. Cần ký và thử trên thiết bị thật trước khi phát hành.
 
-- Android: `app-debug.apk`, chứa manifest, executable và tài nguyên web.
-- iOS: bản Simulator, archive thiết bị và `LaReader-unsigned.ipa`. IPA chứa `Payload/App.app`, bundle ID `app.la.reader`, phiên bản 1.2.0, build 4, nền tảng `iPhoneOS` và privacy manifest.
-- Các gói không chứa sách mẫu. IPA chưa ký để cài lên thiết bị.
-
-## Chưa xác nhận
-
-Chưa có APK/AAB/IPA được biên dịch hoặc ký cục bộ. Môi trường hiện tại chưa có toolchain Android/Xcode được cấu hình để chạy bản native. Kiểm thử mobile trong trình duyệt không thay thế kiểm thử WebView và Filesystem trên thiết bị thật.
-
-Chưa ký iOS, tạo AAB phát hành hoặc phân phối lên TestFlight/App Store/Play Store.
-
-Trước khi phát hành, cần chạy iPhone/iPad và Android thật: nhập tệp qua Files/nhà cung cấp tài liệu, bộ nhớ với tệp lớn, xoay màn hình, mở lại app sau khi hệ điều hành đóng, các EPUB bên ngoài có font hoặc bố cục phức tạp, ký và phân phối.
+Bản web không có service worker: cần máy chủ để tải app. Bản native chứa tài nguyên web trong gói cài đặt; sách đã nhập được đọc offline.

@@ -33,3 +33,5 @@ pnpm test:webkit
 ```
 
 Sách cho kiểm thử được tạo trong bộ nhớ tại `e2e/fixtures.ts`; không nằm trong tài nguyên app hay thư viện mặc định.
+
+Build đã xác minh: [GitHub Actions 41615282658](https://github.com/koyorinnn/la-reader/actions/runs/41615282658), mã nguồn `fc874e444f18400894147837ecd9df46b8c1aeb4`; APK và IPA 1.2.1 (build 5) đã tải về và kiểm tra.
