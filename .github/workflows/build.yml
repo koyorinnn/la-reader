@@ -1,170 +1,110 @@
-name: Build La Reader
-
+name: Native iOS and Android
 on:
   push:
-    branches: [main, master]
+    branches: [main, native-rebuild]
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
-  group: build-${{ github.workflow }}-${{ github.ref }}
+  group: native-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
-  verify:
-    name: Tests and web build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+  ios:
+    name: SwiftUI · iPad tests and IPA
+    runs-on: macos-26
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          package-manager-cache: false
-      - name: Install locked dependencies
+      - name: Generate Xcode project
         run: |
-          npm install --global pnpm@11.25.0
-          pnpm install --frozen-lockfile
-      - run: pnpm test
-      - run: pnpm build
-      - name: Install WebKit for iPad reader regression tests
-        run: pnpm exec playwright install --with-deps webkit
-      - name: Verify EPUB and CBZ touch input on WebKit
-        run: pnpm test:webkit
-      - name: Upload WebKit traces on failure
-        if: failure()
-        uses: actions/upload-artifact@v7
+          xcodebuild -version
+          brew install xcodegen
+          xcodegen generate --spec ios/project.yml
+          python3 scripts/make-fixtures.py
+      - name: Select iPad simulator
+        run: python3 scripts/select-simulator.py
+      - name: Test native iPad library and readers
+        run: |
+          set -o pipefail
+          xcodebuild test -project ios/LaReader.xcodeproj -scheme LaReader \
+            -destination "platform=iOS Simulator,id=$(cat simulator-id.txt)" \
+            -derivedDataPath build-ios -resultBundlePath artifacts/iPad-tests.xcresult \
+            ENABLE_TEST_FIXTURES=YES CODE_SIGNING_ALLOWED=NO \
+            | tee ios-test.log
+      - name: Export test screenshots
+        if: always()
+        run: |
+          mkdir -p artifacts/screenshots
+          if [ -d artifacts/iPad-tests.xcresult ]; then
+            xcrun xcresulttool export attachments --path artifacts/iPad-tests.xcresult --output-path artifacts/screenshots || true
+          fi
+      - name: Build unsigned device archive
+        run: |
+          set -o pipefail
+          xcodebuild archive -project ios/LaReader.xcodeproj -scheme LaReader \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath artifacts/LaReader.xcarchive -derivedDataPath build-ios-device \
+            CODE_SIGNING_ALLOWED=NO ENABLE_TEST_FIXTURES=NO | tee ios-archive.log
+      - name: Package IPA
+        run: |
+          APP=artifacts/LaReader.xcarchive/Products/Applications/LaReader.app
+          test -d "$APP"
+          test ! -d "$APP/TestBooks"
+          mkdir -p artifacts/ipa/Payload
+          ditto "$APP" artifacts/ipa/Payload/LaReader.app
+          ditto -c -k --keepParent artifacts/ipa/Payload artifacts/LaReader-2.0.0-native-unsigned.ipa
+          unzip -t artifacts/LaReader-2.0.0-native-unsigned.ipa
+          ditto -c -k --keepParent build-ios/Build/Products/Debug-iphonesimulator/LaReader.app artifacts/LaReader-native-simulator.zip
+      - uses: actions/upload-artifact@v7
         with:
-          name: la-reader-webkit-traces
-          path: test-results/
-          retention-days: 7
-      - name: Upload web build
-        uses: actions/upload-artifact@v7
-        with:
-          name: la-reader-web
-          path: dist/
+          name: la-reader-native-ios-unsigned
+          path: artifacts/LaReader-2.0.0-native-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
-
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: la-reader-native-ipad-tests
+          path: |
+            artifacts/screenshots/
+            artifacts/iPad-tests.xcresult/
+            artifacts/LaReader-native-simulator.zip
+            ios/LaReader.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+            ios-test.log
+            ios-archive.log
+          retention-days: 7
   android:
-    name: Android debug APK
-    needs: verify
+    name: Kotlin · tests and APK
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          package-manager-cache: false
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
-      - name: Install locked dependencies
-        run: |
-          npm install --global pnpm@11.25.0
-          pnpm install --frozen-lockfile
-      - name: Set up Android SDK tools
-        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
-      - name: Install Android SDK components
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
-      - name: Build and sync app
-        run: |
-          pnpm build
-          pnpm exec cap sync android
-      - name: Assemble APK
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-37' 'build-tools;37.0.0' 'platform-tools'
+      - name: Test and build native Android
         working-directory: android
-        run: bash ./gradlew --no-daemon assembleDebug
-      - name: Upload installable debug APK
-        uses: actions/upload-artifact@v7
+        run: bash ./gradlew --no-daemon testDebugUnitTest assembleDebug lintDebug
+      - uses: actions/upload-artifact@v7
         with:
-          name: la-reader-android-debug
+          name: la-reader-native-android
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
-
-  ios:
-    name: iOS simulator, archive and unsigned IPA
-    needs: verify
-    runs-on: macos-26
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@v7
+      - uses: actions/upload-artifact@v7
+        if: always()
         with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          package-manager-cache: false
-      - name: Check Xcode
-        run: xcodebuild -version
-      - name: Install locked dependencies
-        run: |
-          npm install --global pnpm@11.25.0
-          pnpm install --frozen-lockfile
-      - name: Build and sync app
-        run: |
-          pnpm build
-          pnpm exec cap sync ios
-      - name: Compile simulator app
-        run: |
-          xcodebuild \
-            -project ios/App/App.xcodeproj \
-            -scheme App \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build-ios \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-      - name: Compile unsigned device archive
-        run: |
-          xcodebuild \
-            -project ios/App/App.xcodeproj \
-            -scheme App \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath artifacts/LaReader.xcarchive \
-            -derivedDataPath build-ios-device \
-            CODE_SIGNING_ALLOWED=NO \
-            archive
-      - name: Package unsigned IPA for re-signing
-        run: |
-          IOS_APP_PATH=artifacts/LaReader.xcarchive/Products/Applications/App.app
-          test -d "$IOS_APP_PATH"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleSupportedPlatforms:0' "$IOS_APP_PATH/Info.plist")" = iPhoneOS
-          mkdir -p artifacts/ipa/Payload
-          ditto "$IOS_APP_PATH" artifacts/ipa/Payload/App.app
-          ditto -c -k --keepParent artifacts/ipa/Payload artifacts/LaReader-unsigned.ipa
-          unzip -t artifacts/LaReader-unsigned.ipa
-      - name: Package iOS outputs
-        run: |
-          ditto -c -k --sequesterRsrc --keepParent \
-            build-ios/Build/Products/Debug-iphonesimulator/App.app \
-            artifacts/la-reader-ios-simulator.zip
-          ditto -c -k --sequesterRsrc --keepParent \
-            artifacts/LaReader.xcarchive \
-            artifacts/la-reader-ios-unsigned.xcarchive.zip
-      - name: Upload iOS builds
-        uses: actions/upload-artifact@v7
-        with:
-          name: la-reader-ios
+          name: la-reader-native-android-tests
           path: |
-            artifacts/la-reader-ios-simulator.zip
-            artifacts/la-reader-ios-unsigned.xcarchive.zip
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload unsigned IPA for re-signing
-        uses: actions/upload-artifact@v7
-        with:
-          name: la-reader-ios-unsigned-ipa
-          path: artifacts/LaReader-unsigned.ipa
-          if-no-files-found: error
-          retention-days: 14
+            android/app/build/reports/
+            android/app/build/test-results/
+          retention-days: 7

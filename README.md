@@ -1,90 +1,34 @@
-# Lá Reader
+# Lá Reader · Native
 
-App đọc sách EPUB và truyện tranh CBZ offline, giao diện tiếng Việt. Mã nguồn React + TypeScript, đóng gói ứng dụng iOS và Android bằng Capacitor 8.
+Ứng dụng đọc EPUB và CBZ offline, viết lại bằng **SwiftUI / UIKit cho iOS và iPadOS**, **Kotlin / Jetpack Compose cho Android**. Phiên bản 2.0.0, build 6.
 
-Phiên bản 1.2.1 sửa thao tác chạm EPUB trên WebKit và tối ưu iPad: nhóm điều khiển kính mờ, thanh đọc gọn ở giữa, popover cài đặt, sidebar thích ứng cửa sổ và iPad mini. Thư viện vẫn giữ nền gọn, không kèm sách mẫu. Hiệu ứng glass được dựng bằng CSS trong WebView cho cả iOS và Android.
+Giao diện ứng dụng không phụ thuộc React, React Native, Capacitor hay một trang web. Bộ máy EPUB dùng [Readium Swift 3.11.1](https://github.com/readium/swift-toolkit/releases/tag/3.11.1) và [Readium Kotlin 3.4.0](https://github.com/readium/kotlin-toolkit/releases/tag/3.4.0). Nội dung HTML bên trong EPUB vẫn được Readium dàn trang bằng WebKit/Android WebView; thư viện, điều khiển, cài đặt và trình đọc ảnh CBZ là native.
 
-- EPUB và CBZ đều chọn được một hoặc hai trang khi xoay ngang. EPUB dàn chữ thành hai trang, màn hình dọc tự trở về một trang.
-- Chạm vùng trái/phải (30% mỗi bên) hoặc vuốt ngang để chuyển trang; chiều đọc manga đảo hướng tương ứng. Vùng giữa 40% dùng để ẩn/hiện thanh điều khiển.
-- Chạm giữa trang để ẩn/hiện thanh điều khiển và mở rộng vùng đọc. Hoạt động với cả EPUB và CBZ; chạm hai bên vẫn chuyển trang khi đang đọc toàn màn hình. Nhấn Escape để hiện lại thanh công cụ, hoặc dùng nút hỗ trợ bàn phím **Hiện thanh điều khiển**.
-- Chọn **Lật sách**, **Trượt** hoặc **Không** trong Cài đặt đọc. Hiệu ứng lật dùng nội dung trang thực và tự tắt khi thiết bị bật Giảm chuyển động.
-- Khi chọn chữ, giữ tay lâu, mở bảng cài đặt hoặc phóng to truyện, thao tác chạm không làm chuyển nhầm trang.
+- Nhập nhiều tệp từ Files / trình chọn tài liệu hệ thống; không có tài khoản hoặc sách mẫu.
+- Sidebar iPad, bố cục co giãn theo cửa sổ, popover cài đặt. iOS 26 dùng `glassEffect` của hệ thống; iOS 17–18 dùng system material.
+- EPUB và CBZ: một hoặc hai trang khi xoay ngang, tự về một trang khi đọc dọc.
+- Hai bên 30% để chuyển trang, giữa 40% để ẩn/hiện điều khiển. Chọn chữ và liên kết EPUB do Readium xử lý.
+- CBZ dùng ảnh native, phóng to bằng hai ngón, chiều manga, trang cuối lẻ; iOS dùng `UIPageViewController` với page curl. EPUB có hiệu ứng xoay ảnh trang, trượt hoặc tắt chuyển động.
+- Lưu vị trí, dấu trang, cỡ chữ, giãn dòng, màu trang; không có máy chủ tải sách lên.
 
-Xem [kết quả audit iOS/iPadOS và cách chạy kiểm thử WebKit](AUDIT-IOS.md).
+## Chạy và build
 
-## Build trên GitHub
+**iOS/iPadOS:** macOS, Xcode 26 trở lên, XcodeGen. `brew install xcodegen`, `xcodegen generate --spec ios/project.yml`, rồi mở `ios/LaReader.xcodeproj`, chọn scheme **LaReader**. App hỗ trợ iOS 17 trở lên. Muốn chạy trên thiết bị, bật ký mã và chọn team của bạn.
 
-GitHub Actions đã chạy thành công cho bản 1.2.1: 72 kiểm thử, 4 bài WebKit, bản web, APK Android debug, iOS Simulator, archive và IPA iOS chưa ký. [Mở bản build đã xác minh](https://github.com/koyorinnn/la-reader/actions/runs/41615282658), tải các tệp trong **Artifacts**. Xem [hướng dẫn build và cài thử](GITHUB.md).
+**Android:** JDK 21, Android SDK 37. Mở `android/` trong Android Studio hoặc chạy `cd android && ./gradlew testDebugUnitTest assembleDebug`. App hỗ trợ Android 8 trở lên.
 
-Workflow cũng xuất `LaReader-unsigned.ipa` trong artifact **la-reader-ios-unsigned-ipa**. Đây là IPA chưa ký để tự ký lại trước khi cài lên iPhone; tải từ [lần chạy mới nhất](https://github.com/koyorinnn/la-reader/actions/workflows/build.yml).
+**GitHub Actions:** workflow build SwiftUI trên macOS, chạy unit test và thao tác EPUB/CBZ trên iPad Simulator, xuất IPA chưa ký; Android chạy unit test, lint và xuất APK debug. IPA cần được ký lại trước khi cài. Một lần build thành công không thay thế việc thử trên thiết bị thật.
 
-## Chạy trên máy tính
+Đây là app native; localhost/Vite của bản cũ không hiển thị giao diện phiên bản 2.0. Dùng simulator hoặc cài bản build để xem giao diện mới.
 
-Cài Node.js 22 trở lên. Để dùng đúng các phiên bản thư viện trong `pnpm-lock.yaml`, mở terminal tại thư mục này và chạy:
+## Dữ liệu bản cũ
 
-```sh
-npm install --global pnpm@11.25.0
-pnpm install --frozen-lockfile
-pnpm dev
-```
+Giữ bundle ID `app.la.reader`. Khi nâng cấp cùng chữ ký và giữ dữ liệu app, bản native đọc thư viện Capacitor cũ và sao chép sách vào kho mới, ghi chỉ mục nguyên tử; không xóa kho cũ. CBZ giữ số trang. EPUB đổi từ CFI của epub.js sang Locator của Readium, nên lần mở đầu khôi phục gần vị trí cũ theo phần trăm. Dấu trang CFI cũ được giữ nhưng chỉ khôi phục gần đúng; dấu trang tạo từ bản native dùng Locator chính xác. Gỡ app trước khi cài lại sẽ mất dữ liệu cục bộ.
 
-Mở địa chỉ Vite in trong terminal. Thư viện bắt đầu trống; nhập tệp `.epub` hoặc `.cbz` từ thiết bị bằng nút **Nhập sách**. Nếu muốn dùng npm, `npm install` rồi `npm run dev` vẫn hoạt động, nhưng npm không sử dụng khóa phiên bản của pnpm; không dùng `npm ci` khi chưa có `package-lock.json`.
+Tệp không DRM, tối đa 100 MB nén / 300 MB giải nén / 40 MB mỗi mục / 5.000 mục. Cần giữ bản gốc của sách để sao lưu.
 
-```sh
-npm test
-npm run build
-npm run preview
-```
+## Kiểm thử
 
-`build` kiểm tra TypeScript và tạo tài nguyên sản xuất trong `dist/`. App đóng gói không cần kết nối mạng để mở sách đã nhập. Bản xem trên trình duyệt cần máy chủ Vite hoặc một máy chủ phục vụ `dist/`; đây không phải bản PWA đã đăng ký service worker.
+`python3 scripts/make-fixtures.py` tạo sách thử riêng trong thư mục bị Git bỏ qua. CI chỉ chép chúng vào app iOS Debug khi `ENABLE_TEST_FIXTURES=YES`; archive Release không có các tệp này. Trình đọc thực được kiểm tra bằng XCTest/XCUITest, Android dùng JUnit và lint.
 
-## Android
-
-Cần Android Studio, Android SDK và JDK phù hợp với Capacitor 8. Xem [yêu cầu môi trường chính thức](https://capacitorjs.com/docs/getting-started/environment-setup).
-
-```sh
-npm run build
-npx cap sync android
-npx cap open android
-```
-
-Thư mục `android/` đã được tạo sẵn. Trong Android Studio, chọn thiết bị hoặc emulator rồi Run. Dùng Build → Generate Signed App Bundle / APK để tạo bản phát hành; khóa ký và thông tin Play Console do chủ app cung cấp.
-
-## iOS
-
-Cần máy Mac và Xcode theo [yêu cầu Capacitor iOS](https://capacitorjs.com/docs/ios). Windows có thể phát triển và kiểm tra phần giao diện, nhưng không biên dịch ứng dụng iOS bằng Xcode.
-
-```sh
-npm run build
-npx cap sync ios
-npx cap open ios
-```
-
-Thư mục `ios/` đã được tạo sẵn. Trong Xcode, chọn development team, thay bundle ID `app.la.reader` thành ID riêng rồi chạy trên simulator hoặc iPhone. Archive và phân phối qua TestFlight/App Store cần tài khoản Apple Developer và cấu hình ký của chủ app.
-
-Sau mỗi lần thay đổi mã nguồn, chạy `npm run build` và `npx cap sync` trước khi chạy lại native. Android và iOS đã biên dịch thành công trên GitHub Actions; bản iOS chưa ký và chưa kiểm thử trên thiết bị thật.
-
-App đã có icon và màn hình khởi động riêng cho hai nền tảng. Tệp `ios/App/App/PrivacyInfo.xcprivacy` được đưa vào tài nguyên Xcode, khai báo UserDefaults với lý do `CA92.1` và FileTimestamp với lý do `C617.1`, theo tài liệu [Preferences](https://capacitorjs.com/docs/apis/preferences) và [Filesystem](https://capacitorjs.com/docs/apis/filesystem). Những khai báo này phản ánh việc lưu dữ liệu cục bộ của bản app hiện tại; cần xem lại khi thêm plugin hoặc chức năng thu thập dữ liệu.
-
-## Phạm vi và dữ liệu
-
-- Đọc EPUB không DRM; EPUB có JavaScript tương tác, nội dung cần mạng hoặc bố cục đặc biệt có thể không hiển thị như bản gốc.
-- Đọc CBZ gồm ảnh JPG, JPEG, PNG, WebP, GIF, AVIF. Tên trang được sắp theo số tự nhiên, ví dụ 1, 2, 10.
-- Khi đọc CBZ, màn hình dọc luôn hiển thị một trang. Trong cài đặt, chọn **Bố cục CBZ khi xoay ngang** là **Một trang** hoặc **Hai trang**; tùy chọn được lưu cho các lần đọc sau. Chế độ hai trang tuân theo chiều đọc trái sang phải hoặc phải sang trái (manga), và hiển thị riêng trang cuối nếu số trang lẻ.
-- Giới hạn mỗi tệp nhập: 100 MB nén; tối đa 300 MB sau giải nén, 40 MB mỗi mục, 5.000 mục. Tệp ZIP64 và tệp mã hóa không được hỗ trợ.
-- Sách, tiến độ, dấu trang và tùy chọn nằm trên thiết bị. Không có tài khoản, đồng bộ đám mây, quảng cáo hoặc máy chủ tải sách lên.
-- Xóa dữ liệu ứng dụng hoặc gỡ ứng dụng sẽ làm mất bản sao sách và tiến độ. Hãy giữ tệp EPUB/CBZ gốc ở nơi khác. Trên trình duyệt, việc xóa dữ liệu trang cũng xóa thư viện.
-- Thử nghiệm trên iPhone/iPad và Android thật vẫn cần thiết trước khi phát hành, nhất là tệp lớn, phông chữ nhúng, xoay màn hình và nhập tệp từ nhà cung cấp lưu trữ trên thiết bị.
-
-## Cấu trúc
-
-```text
-src/                 Giao diện, thư viện sách và trình đọc
-public/              Icon và tài nguyên giao diện
-tests/               Kiểm thử xử lý tệp
-android/             Dự án Android Studio
-ios/                 Dự án Xcode và privacy manifest
-capacitor.config.ts  Cấu hình ứng dụng iOS/Android
-```
-
-Thư viện chính: [Capacitor](https://capacitorjs.com/docs), [epub.js](https://github.com/futurepress/epub.js), [fflate](https://github.com/101arrowz/fflate), React và Vite. Xem giấy phép của các gói trước khi phân phối.
+Mã nguồn Capacitor 1.2.1 được giữ ở nhánh `legacy/capacitor-1.2.1` để đối chiếu hoặc quay lại.
