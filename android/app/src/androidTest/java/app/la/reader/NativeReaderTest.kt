@@ -1,0 +1,71 @@
+package app.la.reader
+
+import android.content.Intent
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.File
+
+@RunWith(AndroidJUnit4::class)
+class NativeReaderTest {
+    private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
+    private val device get() = UiDevice.getInstance(instrumentation)
+    private val application get() = instrumentation.targetContext.applicationContext as ReaderApplication
+
+    @Test fun epubTapZonesAndSettings() {
+        val book = import("Native-reader.epub", "epub")
+        launch(book)
+        assertTrue(device.wait(Until.hasObject(By.desc("Cài đặt đọc")), 30000))
+        assertTrue(device.wait(Until.hasObject(By.textContains("%")), 30000))
+        device.click(device.displayWidth/2, device.displayHeight/2)
+        assertTrue(device.wait(Until.gone(By.desc("Ẩn thanh điều khiển")), 5000))
+        device.click(device.displayWidth/2, device.displayHeight/2)
+        assertTrue(device.wait(Until.hasObject(By.desc("Ẩn thanh điều khiển")), 5000))
+        device.click((device.displayWidth*.75).toInt(), device.displayHeight/2)
+        device.waitForIdle()
+        device.findObject(By.desc("Cài đặt đọc")).click()
+        assertTrue(device.wait(Until.hasObject(By.text("Hai trang khi xoay ngang")), 5000))
+        screenshot("android-native-epub-settings")
+        device.findObject(By.text("Xong")).click()
+        device.setOrientationLeft(); device.waitForIdle()
+        screenshot("android-native-epub-landscape")
+        device.click(device.displayWidth/2, device.displayHeight/2)
+        assertTrue(device.wait(Until.gone(By.desc("Ẩn thanh điều khiển")), 5000))
+    }
+    @Test fun cbzTwoPagesAndProgressSurviveReopen() {
+        val book = import("Native-comic.cbz", "cbz")
+        launch(book)
+        assertTrue(device.wait(Until.hasObject(By.textContains("/ 5")), 30000))
+        device.setOrientationLeft(); device.waitForIdle()
+        device.findObject(By.desc("Cài đặt đọc")).click()
+        assertTrue(device.wait(Until.hasObject(By.text("Hai trang khi xoay ngang")), 5000))
+        val toggle = device.findObject(By.text("Hai trang khi xoay ngang")).parent.findObject(By.checkable(true))
+        if (toggle != null && !toggle.isChecked) toggle.click()
+        device.findObject(By.text("Xong")).click()
+        device.click((device.displayWidth*.75).toInt(), device.displayHeight/2)
+        assertTrue(device.wait(Until.hasObject(By.text("3–4 / 5")), 10000))
+        screenshot("android-native-cbz-spread")
+        device.findObject(By.desc("Về thư viện")).click()
+        launch(book)
+        assertTrue(device.wait(Until.hasObject(By.text("3–4 / 5")), 30000))
+    }
+    private fun import(name: String, format: String): Book = runBlocking {
+        instrumentation.context.assets.open(name).use { application.repository.importStream(name, it) }
+        application.repository.books.value.first { it.format == format }
+    }
+    private fun launch(book: Book) {
+        application.startActivity(Intent(application, ReaderActivity::class.java).putExtra("book", book.id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+    }
+    private fun screenshot(name: String) {
+        val directory = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots").apply { mkdirs() }
+        device.takeScreenshot(File(directory, "$name.png"))
+    }
+    @After fun cleanup() { screenshot("android-native-last-screen"); device.setOrientationNatural(); device.unfreezeRotation() }
+}

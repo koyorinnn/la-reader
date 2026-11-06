@@ -79,7 +79,7 @@ jobs:
   android:
     name: Kotlin · tests and APK
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v7
         with:
@@ -90,10 +90,32 @@ jobs:
           java-version: '21'
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
       - name: Install Android SDK
-        run: sdkmanager 'platforms;android-37' 'build-tools;37.0.0' 'platform-tools'
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0' 'platform-tools'
       - name: Test and build native Android
         working-directory: android
         run: bash ./gradlew --no-daemon testDebugUnitTest assembleDebug lintDebug
+      - name: Prepare private Android test books
+        run: |
+          python3 scripts/make-fixtures.py
+          mkdir -p android/app/src/androidTest/assets
+          cp test-fixtures/* android/app/src/androidTest/assets/
+          sudo chmod 666 /dev/kvm
+      - name: Test native readers on Android emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_tablet
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            cd android
+            ./gradlew --no-daemon connectedDebugAndroidTest
+      - name: Collect Android screenshots
+        if: always()
+        run: |
+          mkdir -p artifacts/android-screenshots
+          adb pull /sdcard/Android/data/app.la.reader/files/screenshots artifacts/android-screenshots || true
       - uses: actions/upload-artifact@v7
         with:
           name: la-reader-native-android
@@ -107,4 +129,5 @@ jobs:
           path: |
             android/app/build/reports/
             android/app/build/test-results/
+            artifacts/android-screenshots/
           retention-days: 7

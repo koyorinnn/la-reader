@@ -72,7 +72,7 @@ struct ReaderView: View {
                     .accessibilityLabel("Ẩn thanh điều khiển").accessibilityIdentifier("reader-hide")
             }
             Text(session.label).font(.caption.monospacedDigit()).foregroundStyle(.secondary).padding(.bottom, 8).accessibilityIdentifier("reader-progress")
-        }.padding(.horizontal, 8).readerGlass(radius: 28).buttonStyle(.plain).disabled(session.publication == nil || session.turning)
+        }.padding(.horizontal, 8).readerGlass(radius: 28).buttonStyle(.plain).disabled(!session.ready || session.turning)
     }
     private var settings: some View {
         NavigationStack {
@@ -120,5 +120,5 @@ struct ReaderView: View {
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Xong") { bookmarksVisible = false } } }
         }.presentationDetents([.medium, .large])
     }
-    private func flatten(_ links: [Link]) -> [Link] { links.flatMap { [$0] + flatten($0.children) } }
+    private func flatten(_ links: [ReadiumShared.Link]) -> [ReadiumShared.Link] { links.flatMap { [$0] + flatten($0.children) } }
 }

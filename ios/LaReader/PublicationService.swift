@@ -6,7 +6,7 @@ import ReadiumStreamer
     static let shared = PublicationService()
     private let http = DefaultHTTPClient()
     private lazy var retriever = AssetRetriever(httpClient: http)
-    private lazy var opener = PublicationOpener(parser: DefaultPublicationParser(httpClient: http, assetRetriever: retriever))
+    private lazy var opener = PublicationOpener(parser: DefaultPublicationParser(httpClient: http, assetRetriever: retriever, pdfFactory: DefaultPDFDocumentFactory()))
 
     func open(_ url: URL) async throws -> Publication {
         guard let file = FileURL(url: url) else { throw ReaderFailure("Không tìm thấy tệp sách.") }

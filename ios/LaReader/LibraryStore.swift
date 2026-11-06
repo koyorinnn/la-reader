@@ -21,7 +21,16 @@ import ReadiumShared
                 guard books.allSatisfy({ ReaderPolicy.validID($0.id) }) else { throw ReaderFailure("Chỉ mục thư viện bị lỗi.") }
             } else { try migrateLegacy() }
             if let data = UserDefaults.standard.data(forKey: "la.native.settings.v2") {
-                settings = try JSONDecoder().decode(ReaderSettings.self, from: data)
+                settings = (try? JSONDecoder().decode(ReaderSettings.self, from: data)) ?? ReaderSettings()
+            } else if let raw = UserDefaults.standard.string(forKey: "CapacitorStorage.la.settings.v1"),
+                      let data = raw.data(using: .utf8), let old = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                settings.theme = ReaderTheme(rawValue: old["theme"] as? String ?? "") ?? .paper
+                settings.fontSize = min(32, max(14, old["fontSize"] as? Double ?? 19))
+                settings.lineHeight = min(2.2, max(1.3, old["lineHeight"] as? Double ?? 1.7))
+                settings.epubDouble = old["epubLayout"] as? String != "single"
+                settings.comicDouble = old["comicLayout"] as? String == "double"
+                settings.rightToLeft = old["comicDirection"] as? String == "rtl"
+                settings.motion = PageMotion(rawValue: old["pageAnimation"] as? String ?? "") ?? .curl
             }
         } catch {
             writable = false

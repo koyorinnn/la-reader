@@ -14,6 +14,7 @@ import UIKit
     @Published var page = 0
     @Published var pages = 1
     @Published var turning = false
+    @Published var ready = false
     var positions: [Locator] = []
     var locator: Locator?
     weak var host: ReaderHostController?
@@ -51,6 +52,7 @@ import UIKit
         else { jump(mark.progress) }
     }
     func didLocate(_ locator: Locator) {
+        ready = true
         self.locator = locator
         progress = locator.locations.totalProgression ?? progress
         label = "\(Int((progress*100).rounded()))%"
@@ -58,6 +60,7 @@ import UIKit
     }
     func didShowComic(_ page: Int) {
         guard let publication else { return }
+        ready = true
         self.page = page
         let visible = ReaderPolicy.spread(page: page, count: publication.readingOrder.count, pages: pages)
         let last = visible.last ?? page
@@ -158,7 +161,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     }
     func showComic(_ page: Int) { comic?.show(page) }
     func go(_ locator: Locator) { Task { await epub?.go(to: locator) } }
-    func go(_ link: Link) { Task { await epub?.go(to: link) } }
+    func go(_ link: ReadiumShared.Link) { Task { await epub?.go(to: link) } }
     func navigator(_ navigator: VisualNavigator, didTapAt point: CGPoint) {
         guard !session.turning else { return }
         switch ReaderPolicy.tap(x: point.x, width: navigator.view.bounds.width) {

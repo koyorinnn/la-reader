@@ -36,7 +36,7 @@ class BookRepository(private val context: Context) {
     private val lock = Mutex()
     private val _books = MutableStateFlow<List<Book>>(emptyList())
     val books = _books.asStateFlow()
-    val settings = MutableStateFlow(ReaderSettings.parse(preferences.getString("settings", null)))
+    val settings = MutableStateFlow(loadSettings())
     val error = MutableStateFlow<String?>(null)
     private var writable = true
     private val http = DefaultHttpClient()
@@ -54,6 +54,14 @@ class BookRepository(private val context: Context) {
     fun cover(book: Book) = File(root, "${book.id}.jpg")
     fun book(id: String) = books.value.firstOrNull { it.id == id }
     fun saveSettings(value: ReaderSettings) { settings.value = value; preferences.edit().putString("settings", value.json()).apply() }
+    private fun loadSettings(): ReaderSettings {
+        preferences.getString("settings", null)?.let { return ReaderSettings.parse(it) }
+        return runCatching {
+            val raw = context.getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE).getString("la.settings.v1", null) ?: return ReaderSettings()
+            val old = JSONObject(raw)
+            ReaderSettings(theme = old.optString("theme", "paper"), fontSize = old.optDouble("fontSize", 19.0).coerceIn(14.0,32.0), lineHeight = old.optDouble("lineHeight",1.7).coerceIn(1.3,2.2), epubDouble = old.optString("epubLayout") != "single", comicDouble = old.optString("comicLayout") == "double", rtl = old.optString("comicDirection") == "rtl", motion = old.optString("pageAnimation", "curl"))
+        }.getOrDefault(ReaderSettings())
+    }
     suspend fun open(book: Book): Publication = openFile(file(book))
     private suspend fun openFile(file: File): Publication {
         val asset = retriever.retrieve(file.toUrl(isDirectory = false)).getOrNull() ?: error("Không nhận diện được tệp sách.")
