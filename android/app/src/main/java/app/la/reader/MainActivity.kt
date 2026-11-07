@@ -89,12 +89,12 @@ class MainActivity : FragmentActivity() {
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
             val tablet = maxWidth >= 840.dp
             Row(Modifier.fillMaxSize()) {
-                if (tablet) PermanentNavigationDrawer(drawerContent = {
+                if (tablet) {
                     PermanentDrawerSheet(Modifier.width(220.dp)) {
                         Text("Lá Reader", Modifier.padding(24.dp), style = MaterialTheme.typography.titleLarge)
                         shelves.forEach { name -> NavigationDrawerItem(label = { Text(name) }, selected = shelf == name, onClick = { shelf = name }, modifier = Modifier.padding(horizontal = 12.dp)) }
                     }
-                }) {}
+                }
                 Column(Modifier.weight(1f)) {
                     OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), placeholder = { Text("Tìm sách hoặc tác giả") }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, singleLine = true, shape = RoundedCornerShape(18.dp))
                     if (importing) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 24.dp))

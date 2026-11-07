@@ -11,7 +11,7 @@ final class ReaderUITests: XCTestCase {
         let app = XCUIApplication(); app.launchArguments = ["--uitest"]; app.launch()
         XCUIDevice.shared.orientation = .landscapeLeft
         let book = app.buttons["book-epub"].firstMatch
-        XCTAssertTrue(book.waitForExistence(timeout: 30)); book.tap()
+        XCTAssertTrue(book.waitForExistence(timeout: 30)); attach("Native library landscape"); book.tap()
         let hide = app.buttons["reader-hide"], progress = app.staticTexts["reader-progress"]
         XCTAssertTrue(hide.waitForExistence(timeout: 30))
         XCTAssertTrue(NSPredicate(format: "enabled == true").evaluate(with: hide) || waitEnabled(hide))

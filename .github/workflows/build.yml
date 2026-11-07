@@ -36,6 +36,7 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test -project ios/LaReader.xcodeproj -scheme LaReader \
+            -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 \
             -destination "platform=iOS Simulator,id=$(cat simulator-id.txt)" \
             -derivedDataPath build-ios -resultBundlePath artifacts/iPad-tests.xcresult \
             -onlyUsePackageVersionsFromResolvedFile ENABLE_TEST_FIXTURES=YES CODE_SIGNING_ALLOWED=NO \
@@ -47,11 +48,15 @@ jobs:
           if [ -d artifacts/iPad-tests.xcresult ]; then
             xcrun xcresulttool export attachments --path artifacts/iPad-tests.xcresult --output-path artifacts/screenshots || true
           fi
+          xcrun simctl spawn "$(cat simulator-id.txt)" log show --last 15m --style compact --predicate 'process == "LaReader"' > artifacts/ipad-app.log || true
+          mkdir -p artifacts/crashes
+          find "$HOME/Library/Logs/DiagnosticReports" -maxdepth 1 -name 'LaReader*' -exec cp {} artifacts/crashes/ \; || true
       - name: Test iPhone layout and touch input
         run: |
           set -o pipefail
           python3 scripts/select-simulator.py iPhone
           xcodebuild test -project ios/LaReader.xcodeproj -scheme LaReader \
+            -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 \
             -only-testing:LaReaderUITests \
             -destination "platform=iOS Simulator,id=$(cat simulator-id.txt)" \
             -derivedDataPath build-ios -resultBundlePath artifacts/iPhone-tests.xcresult \
@@ -95,6 +100,8 @@ jobs:
             artifacts/iPad-tests.xcresult/
             artifacts/iPhone-tests.xcresult/
             artifacts/iphone-screenshots/
+            artifacts/ipad-app.log
+            artifacts/crashes/
             artifacts/LaReader-native-simulator.zip
             ios/LaReader.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
             ios-test.log

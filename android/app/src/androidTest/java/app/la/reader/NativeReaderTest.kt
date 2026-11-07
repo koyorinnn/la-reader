@@ -10,11 +10,14 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.Rule
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class NativeReaderTest {
+    @get:Rule val testName = TestName()
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private val device get() = UiDevice.getInstance(instrumentation)
     private val application get() = instrumentation.targetContext.applicationContext as ReaderApplication
@@ -48,8 +51,10 @@ class NativeReaderTest {
         device.findObject(By.desc("Cài đặt đọc")).click()
         assertTrue(device.wait(Until.hasObject(By.text("Hai trang khi xoay ngang")), 5000))
         val toggle = device.findObject(By.text("Hai trang khi xoay ngang")).parent.findObject(By.checkable(true))
+        assertNotNull("The double-page switch must be accessible", toggle)
         if (toggle != null && !toggle.isChecked) toggle.click()
         device.findObject(By.text("Xong")).click()
+        assertTrue(device.wait(Until.hasObject(By.text("1–2 / 5")), 10000))
         device.click((device.displayWidth*.75).toInt(), device.displayHeight/2)
         assertTrue(device.wait(Until.hasObject(By.text("3–4 / 5")), 10000))
         screenshot("android-native-cbz-spread")
@@ -62,7 +67,10 @@ class NativeReaderTest {
         application.repository.books.value.first { it.format == format }
     }
     private fun launch(book: Book) {
-        application.startActivity(Intent(application, ReaderActivity::class.java).putExtra("book", book.id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+        application.startActivity(Intent(application, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+        assertTrue(device.wait(Until.hasObject(By.text(book.title)), 10000))
+        screenshot("android-native-library-${book.format}")
+        device.findObject(By.text(book.title)).click()
     }
     private fun screenshot(name: String) {
         // AGP removes app data after the test run. Shell-owned diagnostics survive it.
@@ -70,11 +78,11 @@ class NativeReaderTest {
         device.executeShellCommand("screencap -p /sdcard/Download/la-reader-tests/$name.png")
         val hierarchy = File(instrumentation.targetContext.cacheDir, "$name.xml")
         device.dumpWindowHierarchy(hierarchy)
-        device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/la-reader-tests/$name.xml")
+        println(device.executeShellCommand("run-as app.la.reader cat ${hierarchy.absolutePath}"))
     }
     private fun landscape() {
         device.setOrientationNatural(); device.waitForIdle()
         if (device.displayWidth < device.displayHeight) { device.setOrientationLeft(); device.waitForIdle() }
     }
-    @After fun cleanup() { screenshot("android-native-last-screen"); device.setOrientationNatural(); device.unfreezeRotation() }
+    @After fun cleanup() { screenshot("android-native-${testName.methodName}-last"); device.setOrientationNatural(); device.unfreezeRotation() }
 }

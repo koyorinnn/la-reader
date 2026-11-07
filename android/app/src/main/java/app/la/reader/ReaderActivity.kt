@@ -86,6 +86,7 @@ class ReaderActivity : FragmentActivity() {
                     val point = Offset(event.x, event.y)
                     captureGesture = loading || failure != null || panel != 0 ||
                         (chrome && (headerBounds.contains(point) || footerBounds.contains(point)))
+                    trace("down=$point controls=$captureGesture header=$headerBounds footer=$footerBounds loading=$loading panel=$panel")
                 }
                 return captureGesture && super.dispatchTouchEvent(event)
             }
@@ -94,7 +95,7 @@ class ReaderActivity : FragmentActivity() {
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1)); setContentView(root)
         content.setBackgroundColor(background())
         root.setOnApplyWindowInsetsListener { _, insets ->
-            val bars = WindowInsetsCompat.toWindowInsetsCompat(insets).getInsets(WindowInsetsCompat.Type.systemBars())
+            val bars = WindowInsetsCompat.toWindowInsetsCompat(insets).getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars())
             val params = content.layoutParams as FrameLayout.LayoutParams
             params.topMargin = bars.top + dp(56); params.bottomMargin = bars.bottom + dp(76)
             params.leftMargin = bars.left; params.rightMargin = bars.right; content.layoutParams = params
@@ -142,7 +143,7 @@ class ReaderActivity : FragmentActivity() {
         theme = when (settings.theme) { "dark" -> Theme.DARK; "sepia" -> Theme.SEPIA; else -> Theme.LIGHT })
     private fun updateLayout() {
         val density = resources.displayMetrics.density
-        val count = ReaderPolicy.pages((content.width/density).toInt(), (content.height/density).toInt(), if (book.format == "epub") settings.epubDouble else settings.comicDouble)
+        val count = ReaderPolicy.pages((root.width/density).toInt(), (root.height/density).toInt(), if (book.format == "epub") settings.epubDouble else settings.comicDouble)
         if (count != pages) { pages = count; epub?.submitPreferences(epubPreferences()); if (comic != null) showComic(page) }
     }
     fun updateSettings(value: ReaderSettings) {
@@ -152,12 +153,14 @@ class ReaderActivity : FragmentActivity() {
     private fun background() = when (settings.theme) { "dark" -> 0xFF101210.toInt(); "sepia" -> 0xFFFAF4E8.toInt(); else -> 0xFFFAFAF8.toInt() }
     private fun dp(value: Int) = (value*resources.displayMetrics.density).toInt()
     private fun tap(x: Float, width: Float) {
+        trace("tap x=$x width=$width format=${book.format} loading=$loading turning=$turning panel=$panel")
         if (panel != 0 || turning || loading) return
         val rtl = if (book.format == "cbz") settings.rtl else epub?.overflow?.value?.readingProgression == ReadingProgression.RTL
         when (ReaderPolicy.tap(x, width)) { ReaderPolicy.Tap.LEFT -> turn(rtl); ReaderPolicy.Tap.RIGHT -> turn(!rtl); ReaderPolicy.Tap.CENTER -> toggleChrome(); else -> Unit }
     }
     fun toggleChrome() {
         chrome = !chrome
+        trace("chrome=$chrome")
         val controller = WindowCompat.getInsetsController(window, root)
         if (chrome) controller.show(WindowInsetsCompat.Type.systemBars()) else {
             controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -184,6 +187,7 @@ class ReaderActivity : FragmentActivity() {
         }
     }
     fun showComic(requested: Int, forward: Boolean? = null) {
+        trace("comic requested=$requested pages=$pages")
         val pub = publication ?: return; val view = comic ?: return
         val indices = ReaderPolicy.spread(requested, pub.readingOrder.size, pages)
         if (indices.isEmpty()) return
@@ -237,4 +241,7 @@ class ReaderActivity : FragmentActivity() {
     }
     override fun onDestroy() { opening?.cancel(); imageJob?.cancel(); publication?.close(); imageCache.evictAll(); super.onDestroy() }
     private fun snapshot(view: View): Bitmap? = runCatching { if (view.width <= 0 || view.height <= 0) null else Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888).also { view.draw(Canvas(it)) } }.getOrNull()
+    private fun trace(message: String) {
+        if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) android.util.Log.d("ReaderInput", message)
+    }
 }
