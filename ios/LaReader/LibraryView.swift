@@ -14,6 +14,7 @@ private enum Shelf: String, CaseIterable, Identifiable {
 struct LibraryView: View {
     @EnvironmentObject private var library: LibraryStore
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var shelf: Shelf? = .all
     @State private var search = ""
     @State private var importer = false
@@ -47,7 +48,7 @@ struct LibraryView: View {
                             .padding(.top, 100)
                         } else { ContentUnavailableView("Chưa có sách", systemImage: (shelf ?? .all).icon).padding(.top, 80) }
                     } else {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: sizeClass == .regular ? 155 : 130, maximum: 220), spacing: 24)], alignment: .leading, spacing: 30) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: typeSize.isAccessibilitySize ? 260 : sizeClass == .regular ? 155 : 130, maximum: typeSize.isAccessibilitySize ? 360 : 220), spacing: 24)], alignment: .leading, spacing: 30) {
                             ForEach(filtered) { book in
                                 Button { selected = book } label: { BookCell(book: book, cover: library.cover(book)) }
                                     .buttonStyle(.plain).accessibilityIdentifier("book-\(book.format.rawValue)")

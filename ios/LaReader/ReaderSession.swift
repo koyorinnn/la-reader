@@ -2,11 +2,13 @@ import SwiftUI
 import ReadiumShared
 import ReadiumNavigator
 import UIKit
+import WebKit
 
 @MainActor final class ReaderSession: ObservableObject {
     let book: LibraryBook
     let store: LibraryStore
     @Published var publication: Publication?
+    @Published var tableOfContents: [ReadiumShared.Link] = []
     @Published var error: String?
     @Published var chrome = true
     @Published var label = "Đang mở sách…"
@@ -31,6 +33,7 @@ import UIKit
             let loadedPositions = (try? await pub.positions().get()) ?? []
             guard !Task.isCancelled else { return }
             positions = loadedPositions
+            tableOfContents = (try? await pub.tableOfContents().get()) ?? []
             if let saved = book.locator { locator = try? Locator(jsonString: saved) }
             if locator == nil, book.progress > 0, !positions.isEmpty {
                 locator = positions.min { abs(($0.locations.totalProgression ?? 0)-book.progress) < abs(($1.locations.totalProgression ?? 0)-book.progress) }
@@ -122,6 +125,11 @@ struct ReaderHost: UIViewControllerRepresentable {
             }
         }
     }
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        snapshot?.layer.removeAllAnimations(); snapshot?.removeFromSuperview(); snapshot = nil
+        session.turning = false
+        super.viewWillTransition(to: size, with: coordinator)
+    }
     func configure(_ value: ReaderSettings) {
         guard value != settings else { return }
         settings = value; effectivePages = 0
@@ -173,6 +181,9 @@ struct ReaderHost: UIViewControllerRepresentable {
     }
     func navigator(_ navigator: Navigator, locationDidChange locator: Locator) { session.didLocate(locator) }
     func navigator(_ navigator: Navigator, presentError error: NavigatorError) { session.error = error.localizedDescription }
+    func navigator(_ navigator: EPUBNavigatorViewController, setupUserScripts userContentController: WKUserContentController) {
+        if let rules = PublicationService.shared.offlineRules { userContentController.add(rules) }
+    }
     func navigatorContentInset(_ navigator: VisualNavigator) -> UIEdgeInsets? {
         UIEdgeInsets(top: max(view.safeAreaInsets.top, 20) + 42, left: view.safeAreaInsets.left, bottom: max(view.safeAreaInsets.bottom, 16) + 58, right: view.safeAreaInsets.right)
     }

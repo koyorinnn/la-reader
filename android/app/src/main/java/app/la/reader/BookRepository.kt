@@ -7,6 +7,9 @@ import android.provider.OpenableColumns
 import android.util.AtomicFile
 import android.graphics.Bitmap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -34,6 +37,7 @@ class BookRepository(private val context: Context) {
     private val index = AtomicFile(File(root, "library-v2.json"))
     private val preferences = context.getSharedPreferences("la.native", Context.MODE_PRIVATE)
     private val lock = Mutex()
+    private val persistenceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _books = MutableStateFlow<List<Book>>(emptyList())
     val books = _books.asStateFlow()
     val settings = MutableStateFlow(loadSettings())
@@ -44,7 +48,7 @@ class BookRepository(private val context: Context) {
     private val opener = PublicationOpener(DefaultPublicationParser(context, assetRetriever = retriever, httpClient = http, pdfFactory = null))
     init {
         try {
-            if (index.baseFile.exists()) {
+            if (index.baseFile.exists() || File(root, "library-v2.json.bak").exists()) {
                 val array = JSONArray(index.openRead().bufferedReader().use { it.readText() })
                 _books.value = (0 until array.length()).map { Book.parse(array.getJSONObject(it)) }
             } else migrateLegacy()
@@ -99,6 +103,9 @@ class BookRepository(private val context: Context) {
         }
     }
     suspend fun position(id: String, locator: String?, page: Int, progress: Double) = mutate { list -> list.map { if (it.id == id) it.copy(locator = locator, page = page, progress = progress.coerceIn(0.0, 1.0), lastReadAt = System.currentTimeMillis()) else it } }
+    fun enqueuePosition(id: String, locator: String?, page: Int, progress: Double) = persistenceScope.launch {
+        runCatching { position(id, locator, page, progress) }.onFailure { if (it !is kotlinx.coroutines.CancellationException) error.value = "Không lưu được tiến độ: ${it.localizedMessage}" }
+    }
     suspend fun bookmark(id: String, mark: Bookmark) = mutate { list -> list.map { book ->
         if (book.id != id) book else {
             val exists = book.bookmarks.any { it.locator == mark.locator && it.page == mark.page }

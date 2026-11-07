@@ -147,9 +147,7 @@ jobs:
           profile: pixel_tablet
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: |
-            cd android
-            ./gradlew --no-daemon connectedDebugAndroidTest
+          script: bash scripts/test-android-device.sh
       - name: Collect Android screenshots
         if: always()
         run: |

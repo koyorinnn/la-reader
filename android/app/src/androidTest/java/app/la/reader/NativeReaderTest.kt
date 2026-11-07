@@ -24,6 +24,7 @@ class NativeReaderTest {
         launch(book)
         assertTrue(device.wait(Until.hasObject(By.desc("Cài đặt đọc")), 30000))
         assertTrue(device.wait(Until.hasObject(By.textContains("%")), 30000))
+        assertTrue(device.wait(Until.hasObject(By.desc("Ẩn thanh điều khiển").enabled(true)), 30000))
         device.click(device.displayWidth/2, device.displayHeight/2)
         assertTrue(device.wait(Until.gone(By.desc("Ẩn thanh điều khiển")), 5000))
         device.click(device.displayWidth/2, device.displayHeight/2)
@@ -34,7 +35,7 @@ class NativeReaderTest {
         assertTrue(device.wait(Until.hasObject(By.text("Hai trang khi xoay ngang")), 5000))
         screenshot("android-native-epub-settings")
         device.findObject(By.text("Xong")).click()
-        device.setOrientationLeft(); device.waitForIdle()
+        landscape()
         screenshot("android-native-epub-landscape")
         device.click(device.displayWidth/2, device.displayHeight/2)
         assertTrue(device.wait(Until.gone(By.desc("Ẩn thanh điều khiển")), 5000))
@@ -43,7 +44,7 @@ class NativeReaderTest {
         val book = import("Native-comic.cbz", "cbz")
         launch(book)
         assertTrue(device.wait(Until.hasObject(By.textContains("/ 5")), 30000))
-        device.setOrientationLeft(); device.waitForIdle()
+        landscape()
         device.findObject(By.desc("Cài đặt đọc")).click()
         assertTrue(device.wait(Until.hasObject(By.text("Hai trang khi xoay ngang")), 5000))
         val toggle = device.findObject(By.text("Hai trang khi xoay ngang")).parent.findObject(By.checkable(true))
@@ -66,6 +67,10 @@ class NativeReaderTest {
     private fun screenshot(name: String) {
         val directory = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots").apply { mkdirs() }
         device.takeScreenshot(File(directory, "$name.png"))
+    }
+    private fun landscape() {
+        device.setOrientationNatural(); device.waitForIdle()
+        if (device.displayWidth < device.displayHeight) { device.setOrientationLeft(); device.waitForIdle() }
     }
     @After fun cleanup() { screenshot("android-native-last-screen"); device.setOrientationNatural(); device.unfreezeRotation() }
 }

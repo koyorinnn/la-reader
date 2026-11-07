@@ -92,13 +92,16 @@ class ReaderActivity : FragmentActivity() {
                     comic = ComicView(this@ReaderActivity, ::tap) { forward -> turn(if (settings.rtl) !forward else forward) }.also { content.addView(it, FrameLayout.LayoutParams(-1, -1)) }
                     showComic(page)
                 }
-                loading = false; updateLayout()
+                if (book.format == "cbz") loading = false
+                updateLayout()
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) { loading = false; failure = "Không mở được sách. ${e.localizedMessage}" }
         }
     }
     private fun openEPUB(pub: Publication) {
-        val factory = EpubNavigatorFactory(pub).createFragmentFactory(initialLocator = locator, initialPreferences = epubPreferences(), listener = object : EpubNavigatorFragment.Listener {
+        val factory = EpubNavigatorFactory(pub).createFragmentFactory(initialLocator = locator, initialPreferences = epubPreferences(), paginationListener = object : EpubNavigatorFragment.PaginationListener {
+            override fun onPageLoaded() { loading = false }
+        }, listener = object : EpubNavigatorFragment.Listener {
             override fun onExternalLinkActivated(url: AbsoluteUrl) { if (url.toString().startsWith("https://") || url.toString().startsWith("http://")) runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.toString()))) } }
         })
         val navigator = factory.instantiate(classLoader, EpubNavigatorFragment::class.java.name) as EpubNavigatorFragment
@@ -207,7 +210,7 @@ class ReaderActivity : FragmentActivity() {
     private fun savePosition() {
         val current = locator?.toJSON()?.toString(); val page = page; val progress = progress
         saving?.cancel()
-        saving = lifecycleScope.launch { runCatching { repository.position(book.id, current, page, progress) }.onFailure { failure = it.localizedMessage } }
+        saving = repository.enqueuePosition(book.id, current, page, progress)
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean = when (keyCode) {
         KeyEvent.KEYCODE_DPAD_LEFT -> { turn(false); true }; KeyEvent.KEYCODE_DPAD_RIGHT -> { turn(true); true }

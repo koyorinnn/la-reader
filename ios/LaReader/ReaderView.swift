@@ -56,7 +56,7 @@ struct ReaderView: View {
                 Button { settingsVisible = true } label: { Image(systemName: "textformat.size").frame(width: 48, height: 48) }
                     .accessibilityLabel("Cài đặt đọc").accessibilityIdentifier("reader-settings")
                     .popover(isPresented: $settingsVisible) { settings.frame(idealWidth: 360, idealHeight: 450).presentationCompactAdaptation(.sheet) }
-            }.readerGlass().disabled(session.publication == nil)
+            }.readerGlass().disabled(!session.ready)
         }.buttonStyle(.plain)
     }
     private var footer: some View {
@@ -99,9 +99,9 @@ struct ReaderView: View {
     }
     private var contents: some View {
         NavigationStack {
-            List { ForEach(Array(flatten(session.publication?.tableOfContents ?? []).enumerated()), id: \.offset) { _, link in
+            List { ForEach(Array(flatten(session.tableOfContents).enumerated()), id: \.offset) { _, link in
                 Button(link.title ?? "Chương") { session.host?.go(link); contentsVisible = false }
-            } }.overlay { if session.publication?.tableOfContents.isEmpty == true { ContentUnavailableView("Sách không có mục lục", systemImage: "list.bullet") } }
+            } }.overlay { if session.tableOfContents.isEmpty { ContentUnavailableView("Sách không có mục lục", systemImage: "list.bullet") } }
                 .navigationTitle("Mục lục").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Xong") { contentsVisible = false } } }
         }.presentationDetents([.medium, .large])
