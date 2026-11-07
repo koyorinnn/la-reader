@@ -103,7 +103,7 @@ import ReadiumShared
             guard let self else { return }
             for (i, index) in indices.enumerated() {
                 if Task.isCancelled { return }
-                let link = publication.readingOrder[index], key = link.href.string as NSString
+                let link = publication.readingOrder[index], key = link.href as NSString
                 var image = cache.object(forKey: key)
                 if image == nil, let resource = publication.get(link), let data = try? await resource.read().get() {
                     image = await Task.detached {

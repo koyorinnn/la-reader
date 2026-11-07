@@ -41,7 +41,7 @@ class BookRepository(private val context: Context) {
     private var writable = true
     private val http = DefaultHttpClient()
     private val retriever = AssetRetriever(context.contentResolver, http)
-    private val opener = PublicationOpener(DefaultPublicationParser(context, assetRetriever = retriever, httpClient = http))
+    private val opener = PublicationOpener(DefaultPublicationParser(context, assetRetriever = retriever, httpClient = http, pdfFactory = null))
     init {
         try {
             if (index.baseFile.exists()) {

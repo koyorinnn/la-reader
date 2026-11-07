@@ -20,14 +20,15 @@ struct LibraryView: View {
     @State private var selected: LibraryBook?
     @State private var deleting: LibraryBook?
     @State private var sortByTitle = false
+    @State private var compactColumn = NavigationSplitViewColumn.detail
     private var filtered: [LibraryBook] {
         library.books.filter { (shelf ?? .all).includes($0) && (search.isEmpty || ($0.title + " " + $0.author).localizedStandardContains(search)) }.sorted {
             sortByTitle ? $0.title.localizedStandardCompare($1.title) == .orderedAscending : max($0.lastReadAt, $0.addedAt) > max($1.lastReadAt, $1.addedAt)
         }
     }
     var body: some View {
-        NavigationSplitView {
-            List(Shelf.allCases, selection: $shelf) { item in Label(item.rawValue, systemImage: item.icon).tag(item) }
+        NavigationSplitView(preferredCompactColumn: $compactColumn) {
+            List(Shelf.allCases, selection: $shelf) { item in NavigationLink(value: item) { Label(item.rawValue, systemImage: item.icon) } }
                 .navigationTitle("Lá")
                 .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 280)
                 .safeAreaInset(edge: .bottom) {

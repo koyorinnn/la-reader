@@ -24,6 +24,12 @@ jobs:
           brew install xcodegen
           xcodegen generate --spec ios/project.yml
           python3 scripts/make-fixtures.py
+      - name: Restore Swift package build cache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: build-ios
+          key: ios26-readium3111-${{ github.sha }}
+          restore-keys: ios26-readium3111-
       - name: Select iPad simulator
         run: python3 scripts/select-simulator.py
       - name: Test native iPad library and readers
@@ -40,6 +46,22 @@ jobs:
           mkdir -p artifacts/screenshots
           if [ -d artifacts/iPad-tests.xcresult ]; then
             xcrun xcresulttool export attachments --path artifacts/iPad-tests.xcresult --output-path artifacts/screenshots || true
+          fi
+      - name: Test iPhone layout and touch input
+        run: |
+          set -o pipefail
+          python3 scripts/select-simulator.py iPhone
+          xcodebuild test -project ios/LaReader.xcodeproj -scheme LaReader \
+            -only-testing:LaReaderUITests \
+            -destination "platform=iOS Simulator,id=$(cat simulator-id.txt)" \
+            -derivedDataPath build-ios -resultBundlePath artifacts/iPhone-tests.xcresult \
+            ENABLE_TEST_FIXTURES=YES CODE_SIGNING_ALLOWED=NO | tee iphone-test.log
+      - name: Export iPhone screenshots
+        if: always()
+        run: |
+          if [ -d artifacts/iPhone-tests.xcresult ]; then
+            mkdir -p artifacts/iphone-screenshots
+            xcrun xcresulttool export attachments --path artifacts/iPhone-tests.xcresult --output-path artifacts/iphone-screenshots || true
           fi
       - name: Build unsigned device archive
         run: |
@@ -71,11 +93,20 @@ jobs:
           path: |
             artifacts/screenshots/
             artifacts/iPad-tests.xcresult/
+            artifacts/iPhone-tests.xcresult/
+            artifacts/iphone-screenshots/
             artifacts/LaReader-native-simulator.zip
             ios/LaReader.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
             ios-test.log
             ios-archive.log
+            iphone-test.log
           retention-days: 7
+      - name: Cache compiled Swift dependencies
+        if: always()
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: build-ios
+          key: ios26-readium3111-${{ github.sha }}
   android:
     name: Kotlin · tests and APK
     runs-on: ubuntu-24.04
@@ -89,6 +120,14 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
+      - name: Restore Gradle dependencies
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle97-readium340-${{ github.sha }}
+          restore-keys: gradle97-readium340-
       - name: Install Android SDK
         run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0' 'platform-tools'
       - name: Test and build native Android
@@ -131,3 +170,11 @@ jobs:
             android/app/build/test-results/
             artifacts/android-screenshots/
           retention-days: 7
+      - name: Cache Gradle dependencies
+        if: always()
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle97-readium340-${{ github.sha }}
