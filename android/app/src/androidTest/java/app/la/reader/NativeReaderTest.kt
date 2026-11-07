@@ -37,7 +37,7 @@ class NativeReaderTest {
         assertTrue(device.wait(Until.gone(By.text(before)), 10000))
         device.waitForIdle()
         device.findObject(By.desc("Cài đặt đọc")).click()
-        assertTrue(device.wait(Until.hasObject(By.desc("Hai trang khi xoay ngang").checkable(true)), 5000))
+        assertTrue(device.wait(Until.hasObject(By.desc("Hai trang khi xoay ngang")), 5000))
         screenshot("android-native-epub-settings")
         device.findObject(By.text("Xong")).click()
         landscape()
@@ -51,8 +51,10 @@ class NativeReaderTest {
         assertTrue(device.wait(Until.hasObject(By.textContains("/ 5")), 30000))
         landscape()
         device.findObject(By.desc("Cài đặt đọc")).click()
-        assertTrue(device.wait(Until.hasObject(By.desc("Hai trang khi xoay ngang").checkable(true)), 5000))
-        val toggle = device.findObject(By.desc("Hai trang khi xoay ngang").checkable(true))
+        assertTrue(device.wait(Until.hasObject(By.desc("Hai trang khi xoay ngang")), 5000))
+        // Compose exposes the merged label as a virtual child of the checkable row.
+        val label = device.findObject(By.desc("Hai trang khi xoay ngang"))
+        val toggle = generateSequence(label) { it.parent }.firstOrNull { it.isCheckable }
         assertNotNull("The double-page switch must be accessible", toggle)
         if (toggle != null && !toggle.isChecked) toggle.click()
         device.findObject(By.text("Xong")).click()
