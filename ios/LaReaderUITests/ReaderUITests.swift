@@ -15,12 +15,12 @@ final class ReaderUITests: XCTestCase {
         let hide = app.buttons["reader-hide"], progress = app.staticTexts["reader-progress"]
         XCTAssertTrue(hide.waitForExistence(timeout: 30))
         XCTAssertTrue(NSPredicate(format: "enabled == true").evaluate(with: hide) || waitEnabled(hide))
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(waitGone(hide))
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(hide.waitForExistence(timeout: 5))
         let before = progress.label
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", before), object: progress)], timeout: 10) == .completed)
         app.buttons["reader-settings"].tap()
         XCTAssertTrue(app.switches["reader-double"].waitForExistence(timeout: 5))
@@ -47,12 +47,12 @@ final class ReaderUITests: XCTestCase {
         let progress = app.staticTexts["reader-progress"]
         XCTAssertTrue(progress.waitForExistence(timeout: 5))
         let before = progress.label
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", before), object: progress)], timeout: 10) == .completed)
         attach("iPad native CBZ spread")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); XCTAssertTrue(waitGone(hide))
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.5)).tap()
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); XCTAssertTrue(waitGone(hide))
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.5)).tap()
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(hide.waitForExistence(timeout: 5))
     }
     private func waitGone(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)], timeout: 5) == .completed }

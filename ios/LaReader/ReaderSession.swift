@@ -42,7 +42,7 @@ import WebKit
             label = book.format == .cbz ? "\(page+1) / \(pub.readingOrder.count)" : "\(Int(progress*100))%"
         } catch { self.error = "Không mở được sách. \(error.localizedDescription)" }
     }
-    func toggleChrome() { withAnimation(.smooth(duration: 0.25)) { chrome.toggle() } }
+    func toggleChrome() { readerTrace("chrome \(!chrome)"); withAnimation(.smooth(duration: 0.25)) { chrome.toggle() } }
     func turn(_ forward: Bool) { host?.turn(forward) }
     func jump(_ value: Double) {
         if book.format == .cbz, let publication {
@@ -55,6 +55,7 @@ import WebKit
         else { jump(mark.progress) }
     }
     func didLocate(_ locator: Locator) {
+        readerTrace("location progress=\(locator.locations.totalProgression ?? -1)")
         ready = true
         self.locator = locator
         progress = locator.locations.totalProgression ?? progress
@@ -146,6 +147,7 @@ struct ReaderHost: UIViewControllerRepresentable {
                         theme: settings.theme == .dark ? .dark : settings.theme == .sepia ? .sepia : .light)
     }
     func turn(_ forward: Bool) {
+        readerTrace("turn forward=\(forward) busy=\(session.turning) ready=\(session.ready)")
         guard !session.turning else { return }
         if let comic { comic.turn(forward); return }
         guard let epub else { return }
@@ -156,6 +158,7 @@ struct ReaderHost: UIViewControllerRepresentable {
         if let old { old.frame = view.bounds; old.isUserInteractionEnabled = false; view.addSubview(old); snapshot = old }
         Task {
             let success = forward ? await epub.goForward(options: .init(animated: animate && !flip)) : await epub.goBackward(options: .init(animated: animate && !flip))
+            readerTrace("turn completed success=\(success)")
             guard success, let old else { self.snapshot?.removeFromSuperview(); self.snapshot = nil; self.session.turning = false; return }
             var perspective = CATransform3DIdentity; perspective.m34 = -1 / 1500
             old.layer.transform = perspective
@@ -171,6 +174,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     func go(_ locator: Locator) { Task { await epub?.go(to: locator) } }
     func go(_ link: ReadiumShared.Link) { Task { await epub?.go(to: link) } }
     func navigator(_ navigator: VisualNavigator, didTapAt point: CGPoint) {
+        readerTrace("epub tap=\(point) bounds=\(navigator.view.bounds) busy=\(session.turning)")
         guard !session.turning else { return }
         switch ReaderPolicy.tap(x: point.x, width: navigator.view.bounds.width) {
         case .left: turn(navigator.presentation.readingProgression == .rtl)
@@ -195,6 +199,12 @@ struct ReaderHost: UIViewControllerRepresentable {
     @objc private func previousPage() { turn(false) }
     @objc private func nextPage() { turn(true) }
     @objc private func showControls() { session.chrome = true }
+}
+
+func readerTrace(_ message: @autoclosure () -> String) {
+    #if DEBUG
+    NSLog("ReaderInput %@", message())
+    #endif
 }
 
 extension ReaderTheme {

@@ -84,7 +84,7 @@ class ReaderActivity : FragmentActivity() {
             override fun dispatchTouchEvent(event: MotionEvent): Boolean {
                 if (event.actionMasked == MotionEvent.ACTION_DOWN) {
                     val point = Offset(event.x, event.y)
-                    captureGesture = loading || failure != null || panel != 0 ||
+                    captureGesture = failure != null || panel != 0 ||
                         (chrome && (headerBounds.contains(point) || footerBounds.contains(point)))
                     trace("down=$point controls=$captureGesture header=$headerBounds footer=$footerBounds loading=$loading panel=$panel")
                 }
@@ -93,7 +93,7 @@ class ReaderActivity : FragmentActivity() {
         }
         overlay.addView(controls, FrameLayout.LayoutParams(-1, -1))
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1)); setContentView(root)
-        content.setBackgroundColor(background())
+        applyAppearance()
         root.setOnApplyWindowInsetsListener { _, insets ->
             val bars = WindowInsetsCompat.toWindowInsetsCompat(insets).getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars())
             val params = content.layoutParams as FrameLayout.LayoutParams
@@ -147,14 +147,21 @@ class ReaderActivity : FragmentActivity() {
         if (count != pages) { pages = count; epub?.submitPreferences(epubPreferences()); if (comic != null) showComic(page) }
     }
     fun updateSettings(value: ReaderSettings) {
-        settings = value; repository.saveSettings(value); content.setBackgroundColor(background())
+        settings = value; repository.saveSettings(value); applyAppearance()
         updateLayout(); epub?.submitPreferences(epubPreferences()); if (comic != null) showComic(page)
     }
     private fun background() = when (settings.theme) { "dark" -> 0xFF101210.toInt(); "sepia" -> 0xFFFAF4E8.toInt(); else -> 0xFFFAFAF8.toInt() }
+    private fun applyAppearance() {
+        root.setBackgroundColor(background()); content.setBackgroundColor(background())
+        WindowCompat.getInsetsController(window, root).apply {
+            isAppearanceLightStatusBars = settings.theme != "dark"
+            isAppearanceLightNavigationBars = settings.theme != "dark"
+        }
+    }
     private fun dp(value: Int) = (value*resources.displayMetrics.density).toInt()
     private fun tap(x: Float, width: Float) {
         trace("tap x=$x width=$width format=${book.format} loading=$loading turning=$turning panel=$panel")
-        if (panel != 0 || turning || loading) return
+        if (panel != 0 || turning) return
         val rtl = if (book.format == "cbz") settings.rtl else epub?.overflow?.value?.readingProgression == ReadingProgression.RTL
         when (ReaderPolicy.tap(x, width)) { ReaderPolicy.Tap.LEFT -> turn(rtl); ReaderPolicy.Tap.RIGHT -> turn(!rtl); ReaderPolicy.Tap.CENTER -> toggleChrome(); else -> Unit }
     }

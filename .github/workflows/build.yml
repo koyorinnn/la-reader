@@ -127,6 +127,11 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
+      - name: Reuse native development signing key
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.android/debug.keystore
+          key: la-native-debug-keystore-v1
       - name: Restore Gradle dependencies
         uses: actions/cache/restore@v6.1.0
         with:

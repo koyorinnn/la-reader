@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,14 +40,16 @@ class MainActivity : FragmentActivity() {
     private val repository get() = (application as ReaderApplication).repository
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val dark = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        WindowCompat.getInsetsController(window, window.decorView).apply { isAppearanceLightStatusBars = !dark; isAppearanceLightNavigationBars = !dark }
         setContent { ReaderTheme { LibraryScreen(repository) { book -> startActivity(Intent(this, ReaderActivity::class.java).putExtra("book", book.id)) } } }
         if (intent.action == Intent.ACTION_VIEW) intent.data?.let { uri -> lifecycleScope.launch { runCatching { repository.importUri(uri) }.onFailure { repository.error.value = it.localizedMessage } } }
     }
 }
 
 @Composable fun ReaderTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val colors = if (dark) darkColorScheme(primary = Color(0xFFA3C7AE), background = Color(0xFF151715), surface = Color(0xFF1C1E1C))
-        else lightColorScheme(primary = Color(0xFF3D614D), background = Color(0xFFFAFAF8), surface = Color(0xFFFAFAF8), surfaceContainer = Color(0xFFF0F1EC))
+    val colors = if (dark) darkColorScheme(primary = Color(0xFFA3C7AE), primaryContainer = Color(0xFF2B4031), onPrimaryContainer = Color(0xFFDCEADC), secondary = Color(0xFFACBDAE), secondaryContainer = Color(0xFF303D32), onSecondaryContainer = Color(0xFFDCEADC), background = Color(0xFF151715), surface = Color(0xFF1C1E1C), surfaceContainer = Color(0xFF222722), surfaceVariant = Color(0xFF343B34))
+        else lightColorScheme(primary = Color(0xFF3D614D), primaryContainer = Color(0xFFDFEADF), onPrimaryContainer = Color(0xFF193622), secondary = Color(0xFF526452), secondaryContainer = Color(0xFFE4EBE3), onSecondaryContainer = Color(0xFF243629), background = Color(0xFFFAFAF8), surface = Color(0xFFFAFAF8), surfaceContainer = Color(0xFFF0F1EC), surfaceVariant = Color(0xFFE3E7E0))
     MaterialTheme(colorScheme = colors, content = content)
 }
 

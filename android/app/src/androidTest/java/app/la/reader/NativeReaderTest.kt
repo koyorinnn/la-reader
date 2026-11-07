@@ -32,7 +32,9 @@ class NativeReaderTest {
         assertTrue(device.wait(Until.gone(By.desc("Ẩn thanh điều khiển")), 5000))
         device.click(device.displayWidth/2, device.displayHeight/2)
         assertTrue(device.wait(Until.hasObject(By.desc("Ẩn thanh điều khiển")), 5000))
+        val before = device.findObject(By.textContains("%")).text
         device.click((device.displayWidth*.75).toInt(), device.displayHeight/2)
+        assertTrue(device.wait(Until.gone(By.text(before)), 10000))
         device.waitForIdle()
         device.findObject(By.desc("Cài đặt đọc")).click()
         assertTrue(device.wait(Until.hasObject(By.text("Hai trang khi xoay ngang")), 5000))
@@ -50,7 +52,7 @@ class NativeReaderTest {
         landscape()
         device.findObject(By.desc("Cài đặt đọc")).click()
         assertTrue(device.wait(Until.hasObject(By.text("Hai trang khi xoay ngang")), 5000))
-        val toggle = device.findObject(By.text("Hai trang khi xoay ngang")).parent.findObject(By.checkable(true))
+        val toggle = device.findObject(By.desc("Hai trang khi xoay ngang").checkable(true))
         assertNotNull("The double-page switch must be accessible", toggle)
         if (toggle != null && !toggle.isChecked) toggle.click()
         device.findObject(By.text("Xong")).click()

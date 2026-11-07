@@ -54,6 +54,7 @@ import ReadiumShared
         }
     }
     @objc private func tapped(_ recognizer: UITapGestureRecognizer) {
+        readerTrace("cbz tap=\(recognizer.location(in: view)) bounds=\(view.bounds)")
         guard (pager.viewControllers?.first as? ComicSpreadController)?.zoomed != true else { return }
         switch ReaderPolicy.tap(x: recognizer.location(in: view).x, width: view.bounds.width) {
         case .left: turn(settings.rightToLeft)

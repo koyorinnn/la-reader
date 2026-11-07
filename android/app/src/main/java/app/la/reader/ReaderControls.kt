@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,14 +39,14 @@ import org.readium.r2.shared.publication.Link
         AnimatedVisibility(reader.chrome, Modifier.align(Alignment.TopCenter), enter = fadeIn()+slideInVertically { -it }, exit = fadeOut()+slideOutVertically { -it }) {
             Row(Modifier.onGloballyPositioned { reader.headerBounds = it.boundsInRoot() }.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 ControlSurface {
-                    IconButton(onClick = { reader.finish() }) { Icon(Icons.Outlined.KeyboardArrowDown, "Về thư viện") }
+                    IconButton(onClick = { reader.finish() }, Modifier.semantics { contentDescription = "Về thư viện" }) { Icon(Icons.Outlined.KeyboardArrowDown, null) }
                 }
                 Text(book.title, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
                 ControlSurface {
                     Row {
-                        if (book.format == "epub") IconButton(enabled = !reader.loading, onClick = { reader.panel = 2 }) { Icon(Icons.AutoMirrored.Outlined.List, "Mục lục") }
-                        IconButton(enabled = !reader.loading, onClick = { reader.panel = 3 }) { Icon(if (reader.bookmarked) Icons.Outlined.BookmarkAdded else Icons.Outlined.BookmarkBorder, "Dấu trang") }
-                        IconButton(enabled = !reader.loading, onClick = { reader.panel = 1 }) { Icon(Icons.Outlined.TextFields, "Cài đặt đọc") }
+                        if (book.format == "epub") IconButton(enabled = !reader.loading, onClick = { reader.panel = 2 }, modifier = Modifier.semantics { contentDescription = "Mục lục" }) { Icon(Icons.AutoMirrored.Outlined.List, null) }
+                        IconButton(enabled = !reader.loading, onClick = { reader.panel = 3 }, modifier = Modifier.semantics { contentDescription = "Dấu trang" }) { Icon(if (reader.bookmarked) Icons.Outlined.BookmarkAdded else Icons.Outlined.BookmarkBorder, null) }
+                        IconButton(enabled = !reader.loading, onClick = { reader.panel = 1 }, modifier = Modifier.semantics { contentDescription = "Cài đặt đọc" }) { Icon(Icons.Outlined.TextFields, null) }
                     }
                 }
             }
@@ -54,10 +56,10 @@ import org.readium.r2.shared.publication.Link
                 ControlSurface {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(enabled = !reader.loading, onClick = { reader.turn(false) }) { Icon(Icons.Outlined.ChevronLeft, "Trang trước") }
+                            IconButton(enabled = !reader.loading, onClick = { reader.turn(false) }, modifier = Modifier.semantics { contentDescription = "Trang trước" }) { Icon(Icons.Outlined.ChevronLeft, null) }
                             Slider(slider, { slider = it; dragging = true }, Modifier.weight(1f), enabled = !reader.loading, onValueChangeFinished = { dragging = false; reader.seek(slider.toDouble()) })
-                            IconButton(enabled = !reader.loading, onClick = { reader.turn(true) }) { Icon(Icons.Outlined.ChevronRight, "Trang sau") }
-                            IconButton(enabled = !reader.loading, onClick = { reader.toggleChrome() }) { Icon(Icons.Outlined.Fullscreen, "Ẩn thanh điều khiển") }
+                            IconButton(enabled = !reader.loading, onClick = { reader.turn(true) }, modifier = Modifier.semantics { contentDescription = "Trang sau" }) { Icon(Icons.Outlined.ChevronRight, null) }
+                            IconButton(enabled = !reader.loading, onClick = { reader.toggleChrome() }, modifier = Modifier.semantics { contentDescription = "Ẩn thanh điều khiển" }) { Icon(Icons.Outlined.Fullscreen, null) }
                         }
                         Text(reader.label, Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -108,9 +110,9 @@ import org.readium.r2.shared.publication.Link
         }
         item { HorizontalDivider(); Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Hai trang khi xoay ngang", Modifier.weight(1f))
-            Switch(checked = if (reader.book.format == "epub") settings.epubDouble else settings.comicDouble, onCheckedChange = { reader.updateSettings(if (reader.book.format == "epub") settings.copy(epubDouble = it) else settings.copy(comicDouble = it)) })
+            Switch(checked = if (reader.book.format == "epub") settings.epubDouble else settings.comicDouble, onCheckedChange = { reader.updateSettings(if (reader.book.format == "epub") settings.copy(epubDouble = it) else settings.copy(comicDouble = it)) }, modifier = Modifier.semantics { contentDescription = "Hai trang khi xoay ngang" })
         } }
-        if (reader.book.format == "cbz") item { Row(verticalAlignment = Alignment.CenterVertically) { Text("Đọc từ phải sang trái", Modifier.weight(1f)); Switch(settings.rtl, { reader.updateSettings(settings.copy(rtl = it)) }) } }
+        if (reader.book.format == "cbz") item { Row(verticalAlignment = Alignment.CenterVertically) { Text("Đọc từ phải sang trái", Modifier.weight(1f)); Switch(settings.rtl, { reader.updateSettings(settings.copy(rtl = it)) }, Modifier.semantics { contentDescription = "Đọc từ phải sang trái" }) } }
         item { Text("Chuyển trang", style = MaterialTheme.typography.labelLarge); Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("curl" to "Lật trang", "slide" to "Trượt", "none" to "Không").forEach { (value, title) -> FilterChip(settings.motion == value, { reader.updateSettings(settings.copy(motion = value)) }, label = { Text(title) }) }
         } }
