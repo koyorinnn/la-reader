@@ -65,8 +65,12 @@ class NativeReaderTest {
         application.startActivity(Intent(application, ReaderActivity::class.java).putExtra("book", book.id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
     }
     private fun screenshot(name: String) {
-        val directory = File(instrumentation.targetContext.getExternalFilesDir(null), "screenshots").apply { mkdirs() }
-        device.takeScreenshot(File(directory, "$name.png"))
+        // AGP removes app data after the test run. Shell-owned diagnostics survive it.
+        device.executeShellCommand("mkdir -p /sdcard/Download/la-reader-tests")
+        device.executeShellCommand("screencap -p /sdcard/Download/la-reader-tests/$name.png")
+        val hierarchy = File(instrumentation.targetContext.cacheDir, "$name.xml")
+        device.dumpWindowHierarchy(hierarchy)
+        device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/la-reader-tests/$name.xml")
     }
     private fun landscape() {
         device.setOrientationNatural(); device.waitForIdle()

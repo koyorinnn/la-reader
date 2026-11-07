@@ -17,6 +17,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,7 +35,7 @@ import org.readium.r2.shared.publication.Link
     Box(Modifier.fillMaxSize()) {
         if (reader.loading) CircularProgressIndicator(Modifier.align(Alignment.Center))
         AnimatedVisibility(reader.chrome, Modifier.align(Alignment.TopCenter), enter = fadeIn()+slideInVertically { -it }, exit = fadeOut()+slideOutVertically { -it }) {
-            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.onGloballyPositioned { reader.headerBounds = it.boundsInRoot() }.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 ControlSurface {
                     IconButton(onClick = { reader.finish() }) { Icon(Icons.Outlined.KeyboardArrowDown, "Về thư viện") }
                 }
@@ -48,7 +50,7 @@ import org.readium.r2.shared.publication.Link
             }
         }
         AnimatedVisibility(reader.chrome, Modifier.align(Alignment.BottomCenter), enter = fadeIn()+slideInVertically { it }, exit = fadeOut()+slideOutVertically { it }) {
-            Box(Modifier.navigationBarsPadding().padding(horizontal = 18.dp, vertical = 10.dp).widthIn(max = 560.dp)) {
+            Box(Modifier.onGloballyPositioned { reader.footerBounds = it.boundsInRoot() }.navigationBarsPadding().padding(horizontal = 18.dp, vertical = 10.dp).widthIn(max = 560.dp)) {
                 ControlSurface {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

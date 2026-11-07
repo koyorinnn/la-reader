@@ -1,6 +1,12 @@
 import XCTest
 
 final class ReaderUITests: XCTestCase {
+    override func setUpWithError() throws { continueAfterFailure = false }
+    @MainActor override func tearDownWithError() throws {
+        attach("Native reader final screen")
+        let hierarchy = XCTAttachment(string: XCUIApplication().debugDescription)
+        hierarchy.name = "Native reader hierarchy"; hierarchy.lifetime = .keepAlways; add(hierarchy)
+    }
     @MainActor func testEPUBCenterSidesRotationAndSettings() throws {
         let app = XCUIApplication(); app.launchArguments = ["--uitest"]; app.launch()
         XCUIDevice.shared.orientation = .landscapeLeft

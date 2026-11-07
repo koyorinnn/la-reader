@@ -22,7 +22,7 @@ jobs:
         run: |
           xcodebuild -version
           brew install xcodegen
-          xcodegen generate --spec ios/project.yml
+          bash scripts/generate-ios.sh
           python3 scripts/make-fixtures.py
       - name: Restore Swift package build cache
         uses: actions/cache/restore@v6.1.0
@@ -38,7 +38,7 @@ jobs:
           xcodebuild test -project ios/LaReader.xcodeproj -scheme LaReader \
             -destination "platform=iOS Simulator,id=$(cat simulator-id.txt)" \
             -derivedDataPath build-ios -resultBundlePath artifacts/iPad-tests.xcresult \
-            ENABLE_TEST_FIXTURES=YES CODE_SIGNING_ALLOWED=NO \
+            -onlyUsePackageVersionsFromResolvedFile ENABLE_TEST_FIXTURES=YES CODE_SIGNING_ALLOWED=NO \
             | tee ios-test.log
       - name: Export test screenshots
         if: always()
@@ -55,7 +55,7 @@ jobs:
             -only-testing:LaReaderUITests \
             -destination "platform=iOS Simulator,id=$(cat simulator-id.txt)" \
             -derivedDataPath build-ios -resultBundlePath artifacts/iPhone-tests.xcresult \
-            ENABLE_TEST_FIXTURES=YES CODE_SIGNING_ALLOWED=NO | tee iphone-test.log
+            -onlyUsePackageVersionsFromResolvedFile ENABLE_TEST_FIXTURES=YES CODE_SIGNING_ALLOWED=NO | tee iphone-test.log
       - name: Export iPhone screenshots
         if: always()
         run: |
@@ -69,7 +69,7 @@ jobs:
           xcodebuild archive -project ios/LaReader.xcodeproj -scheme LaReader \
             -configuration Release -destination 'generic/platform=iOS' \
             -archivePath artifacts/LaReader.xcarchive -derivedDataPath build-ios-device \
-            CODE_SIGNING_ALLOWED=NO ENABLE_TEST_FIXTURES=NO | tee ios-archive.log
+            -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO ENABLE_TEST_FIXTURES=NO | tee ios-archive.log
       - name: Package IPA
         run: |
           APP=artifacts/LaReader.xcarchive/Products/Applications/LaReader.app
@@ -152,7 +152,7 @@ jobs:
         if: always()
         run: |
           mkdir -p artifacts/android-screenshots
-          adb pull /sdcard/Android/data/app.la.reader/files/screenshots artifacts/android-screenshots || true
+          adb pull /sdcard/Download/la-reader-tests artifacts/android-screenshots || true
       - uses: actions/upload-artifact@v7
         with:
           name: la-reader-native-android

@@ -4,5 +4,6 @@ cd android
 ./gradlew --no-daemon connectedDebugAndroidTest
 result=$?
 mkdir -p ../artifacts/android-screenshots
-adb pull /sdcard/Android/data/app.la.reader/files/screenshots ../artifacts/android-screenshots || true
+adb pull /sdcard/Download/la-reader-tests ../artifacts/android-screenshots || true
+adb logcat -d > ../artifacts/android-screenshots/logcat.txt
 exit "$result"

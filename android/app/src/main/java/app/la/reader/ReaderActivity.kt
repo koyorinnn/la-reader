@@ -9,10 +9,13 @@ import android.graphics.Canvas
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentActivity
@@ -47,6 +50,8 @@ class ReaderActivity : FragmentActivity() {
     var page by mutableIntStateOf(0); private set
     var publication by mutableStateOf<Publication?>(null); private set
     var pages by mutableIntStateOf(1); private set
+    var headerBounds = Rect.Zero
+    var footerBounds = Rect.Zero
     private var locator: Locator? = null
     private var positions: List<Locator> = emptyList()
     private lateinit var root: FrameLayout
@@ -72,7 +77,21 @@ class ReaderActivity : FragmentActivity() {
         root = FrameLayout(this); content = FrameLayout(this).apply { id = View.generateViewId() }
         root.addView(content, FrameLayout.LayoutParams(-1, -1))
         val controls = ComposeView(this).apply { setContent { ReaderTheme(dark = settings.theme == "dark") { ReaderControls(this@ReaderActivity, repository) } } }
-        root.addView(controls, FrameLayout.LayoutParams(-1, -1)); setContentView(root)
+        // A transparent Compose root still consumes Android touch dispatch. Only route
+        // gestures starting on visible controls to it; all page input reaches Readium/CBZ.
+        val overlay = object : FrameLayout(this) {
+            private var captureGesture = false
+            override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    val point = Offset(event.x, event.y)
+                    captureGesture = loading || failure != null || panel != 0 ||
+                        (chrome && (headerBounds.contains(point) || footerBounds.contains(point)))
+                }
+                return captureGesture && super.dispatchTouchEvent(event)
+            }
+        }
+        overlay.addView(controls, FrameLayout.LayoutParams(-1, -1))
+        root.addView(overlay, FrameLayout.LayoutParams(-1, -1)); setContentView(root)
         content.setBackgroundColor(background())
         root.setOnApplyWindowInsetsListener { _, insets ->
             val bars = WindowInsetsCompat.toWindowInsetsCompat(insets).getInsets(WindowInsetsCompat.Type.systemBars())

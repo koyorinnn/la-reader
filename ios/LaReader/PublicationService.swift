@@ -14,7 +14,8 @@ import WebKit
         if offlineRules == nil {
             offlineRules = try await withCheckedThrowingContinuation { continuation in
                 WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "la-offline-publications", encodedContentRuleList: """
-                [{"trigger":{"url-filter":"^(https?|wss?)://"},"action":{"type":"block"}}]
+                [{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},
+                 {"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]
                 """) { rules, error in
                     if let error { continuation.resume(throwing: error) }
                     else { continuation.resume(returning: rules) }

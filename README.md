@@ -13,7 +13,7 @@ Giao diện ứng dụng không phụ thuộc React, React Native, Capacitor hay
 
 ## Chạy và build
 
-**iOS/iPadOS:** macOS, Xcode 26 trở lên, XcodeGen. `brew install xcodegen`, `xcodegen generate --spec ios/project.yml`, rồi mở `ios/LaReader.xcodeproj`, chọn scheme **LaReader**. App hỗ trợ iOS 17 trở lên. Muốn chạy trên thiết bị, bật ký mã và chọn team của bạn.
+**iOS/iPadOS:** macOS, Xcode 26 trở lên, XcodeGen. `brew install xcodegen`, `bash scripts/generate-ios.sh`, rồi mở `ios/LaReader.xcodeproj`, chọn scheme **LaReader**. Script chép khóa phiên bản Swift Package Manager từ `ios/Package.resolved`. App hỗ trợ iOS 17 trở lên. Muốn chạy trên thiết bị, bật ký mã và chọn team của bạn.
 
 **Android:** JDK 21, Android SDK 37. Mở `android/` trong Android Studio hoặc chạy `cd android && ./gradlew testDebugUnitTest assembleDebug`. App hỗ trợ Android 8 trở lên.
 
