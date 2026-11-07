@@ -46,15 +46,20 @@ final class ReaderUITests: XCTestCase {
         app.buttons["Xong"].tap()
         let progress = app.staticTexts["reader-progress"]
         XCTAssertTrue(progress.waitForExistence(timeout: 5))
-        let before = progress.label
+        XCTAssertTrue(waitLabel(progress, "1–2 / 5"))
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
-        XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", before), object: progress)], timeout: 10) == .completed)
+        XCTAssertTrue(waitLabel(progress, "3–4 / 5"))
         attach("iPad native CBZ spread")
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap(); XCTAssertTrue(waitGone(hide))
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.5)).tap()
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(hide.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitLabel(progress, "1–2 / 5"))
+        app.buttons["reader-close"].tap()
+        XCTAssertTrue(book.waitForExistence(timeout: 5)); book.tap()
+        XCTAssertTrue(waitLabel(progress, "1–2 / 5"))
     }
+    private func waitLabel(_ element: XCUIElement, _ label: String) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)], timeout: 10) == .completed }
     private func waitGone(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)], timeout: 5) == .completed }
     private func waitEnabled(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: element)], timeout: 30) == .completed }
     @MainActor private func attach(_ name: String) { let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot) }

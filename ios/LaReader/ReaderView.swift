@@ -77,20 +77,26 @@ struct ReaderView: View {
     private var settings: some View {
         NavigationStack {
             Form {
+                Section("Bố cục") {
+                    Toggle("Hai trang khi xoay ngang", isOn: session.book.format == .epub ? $store.settings.epubDouble : $store.settings.comicDouble).accessibilityIdentifier("reader-double")
+                    if session.book.format == .cbz { Toggle("Đọc từ phải sang trái", isOn: $store.settings.rightToLeft) }
+                }
                 Section("Giao diện") {
                     Picker("Màu trang", selection: $store.settings.theme) { ForEach(ReaderTheme.allCases, id: \.self) { Text($0.title).tag($0) } }.pickerStyle(.segmented)
                 }
                 if session.book.format == .epub {
                     Section("Chữ") {
-                        LabeledContent("Cỡ chữ", value: "\(Int(store.settings.fontSize))")
-                        Slider(value: $store.settings.fontSize, in: 14...32, step: 1).accessibilityLabel("Cỡ chữ")
-                        LabeledContent("Giãn dòng", value: String(format: "%.1f", store.settings.lineHeight))
-                        Slider(value: $store.settings.lineHeight, in: 1.3...2.2, step: 0.1).accessibilityLabel("Giãn dòng")
+                        VStack(spacing: 12) {
+                            LabeledContent("Cỡ chữ", value: "\(Int(store.settings.fontSize))")
+                            Slider(value: $store.settings.fontSize, in: 14...32, step: 1).accessibilityLabel("Cỡ chữ")
+                        }.padding(.vertical, 4)
+                        VStack(spacing: 12) {
+                            LabeledContent("Giãn dòng", value: String(format: "%.1f", store.settings.lineHeight))
+                            Slider(value: $store.settings.lineHeight, in: 1.3...2.2, step: 0.1).accessibilityLabel("Giãn dòng")
+                        }.padding(.vertical, 4)
                     }
                 }
                 Section {
-                    Toggle("Hai trang khi xoay ngang", isOn: session.book.format == .epub ? $store.settings.epubDouble : $store.settings.comicDouble).accessibilityIdentifier("reader-double")
-                    if session.book.format == .cbz { Toggle("Đọc từ phải sang trái", isOn: $store.settings.rightToLeft) }
                     Picker("Chuyển trang", selection: $store.settings.motion) { ForEach(PageMotion.allCases, id: \.self) { Text($0.title).tag($0) } }
                 } footer: { Text("Chạm hai bên để chuyển trang. Chạm giữa để ẩn hoặc hiện điều khiển.") }
             }.navigationTitle("Cài đặt đọc").navigationBarTitleDisplayMode(.inline)

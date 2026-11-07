@@ -54,6 +54,7 @@ jobs:
       - name: Test iPhone layout and touch input
         run: |
           set -o pipefail
+          xcrun simctl shutdown "$(cat simulator-id.txt)"
           python3 scripts/select-simulator.py iPhone
           xcodebuild test -project ios/LaReader.xcodeproj -scheme LaReader \
             -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 \
@@ -67,6 +68,7 @@ jobs:
           if [ -d artifacts/iPhone-tests.xcresult ]; then
             mkdir -p artifacts/iphone-screenshots
             xcrun xcresulttool export attachments --path artifacts/iPhone-tests.xcresult --output-path artifacts/iphone-screenshots || true
+            xcrun simctl spawn "$(cat simulator-id.txt)" log show --last 15m --style compact --predicate 'process == "LaReader"' > artifacts/iphone-app.log || true
           fi
       - name: Build unsigned device archive
         run: |
@@ -101,6 +103,7 @@ jobs:
             artifacts/iPhone-tests.xcresult/
             artifacts/iphone-screenshots/
             artifacts/ipad-app.log
+            artifacts/iphone-app.log
             artifacts/crashes/
             artifacts/LaReader-native-simulator.zip
             ios/LaReader.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

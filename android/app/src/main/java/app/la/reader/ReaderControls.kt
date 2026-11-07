@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.*
@@ -20,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -108,15 +111,22 @@ import org.readium.r2.shared.publication.Link
             item { Text("Cỡ chữ · ${settings.fontSize.toInt()}"); Slider(settings.fontSize.toFloat(), { reader.updateSettings(settings.copy(fontSize = it.toDouble())) }, valueRange = 14f..32f, steps = 17) }
             item { Text("Giãn dòng · ${"%.1f".format(settings.lineHeight)}"); Slider(settings.lineHeight.toFloat(), { reader.updateSettings(settings.copy(lineHeight = it.toDouble())) }, valueRange = 1.3f..2.2f, steps = 8) }
         }
-        item { HorizontalDivider(); Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Hai trang khi xoay ngang", Modifier.weight(1f))
-            Switch(checked = if (reader.book.format == "epub") settings.epubDouble else settings.comicDouble, onCheckedChange = { reader.updateSettings(if (reader.book.format == "epub") settings.copy(epubDouble = it) else settings.copy(comicDouble = it)) }, modifier = Modifier.semantics { contentDescription = "Hai trang khi xoay ngang" })
+        item { HorizontalDivider(); ReadingSwitch("Hai trang khi xoay ngang", if (reader.book.format == "epub") settings.epubDouble else settings.comicDouble) {
+            reader.updateSettings(if (reader.book.format == "epub") settings.copy(epubDouble = it) else settings.copy(comicDouble = it))
         } }
-        if (reader.book.format == "cbz") item { Row(verticalAlignment = Alignment.CenterVertically) { Text("Đọc từ phải sang trái", Modifier.weight(1f)); Switch(settings.rtl, { reader.updateSettings(settings.copy(rtl = it)) }, Modifier.semantics { contentDescription = "Đọc từ phải sang trái" }) } }
+        if (reader.book.format == "cbz") item { ReadingSwitch("Đọc từ phải sang trái", settings.rtl) { reader.updateSettings(settings.copy(rtl = it)) } }
         item { Text("Chuyển trang", style = MaterialTheme.typography.labelLarge); Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("curl" to "Lật trang", "slide" to "Trượt", "none" to "Không").forEach { (value, title) -> FilterChip(settings.motion == value, { reader.updateSettings(settings.copy(motion = value)) }, label = { Text(title) }) }
         } }
         item { Text("Chạm hai bên để chuyển trang. Chạm giữa để ẩn hoặc hiện điều khiển.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    }
+}
+@Composable private fun ReadingSwitch(title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
+        .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
+        .semantics(mergeDescendants = true) { contentDescription = title }, verticalAlignment = Alignment.CenterVertically) {
+        Text(title, Modifier.weight(1f).clearAndSetSemantics {})
+        Switch(checked, null, Modifier.clearAndSetSemantics {})
     }
 }
 @Composable private fun ControlSurface(content: @Composable () -> Unit) {

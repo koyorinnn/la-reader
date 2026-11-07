@@ -48,8 +48,18 @@ class MainActivity : FragmentActivity() {
 }
 
 @Composable fun ReaderTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val colors = if (dark) darkColorScheme(primary = Color(0xFFA3C7AE), primaryContainer = Color(0xFF2B4031), onPrimaryContainer = Color(0xFFDCEADC), secondary = Color(0xFFACBDAE), secondaryContainer = Color(0xFF303D32), onSecondaryContainer = Color(0xFFDCEADC), background = Color(0xFF151715), surface = Color(0xFF1C1E1C), surfaceContainer = Color(0xFF222722), surfaceVariant = Color(0xFF343B34))
-        else lightColorScheme(primary = Color(0xFF3D614D), primaryContainer = Color(0xFFDFEADF), onPrimaryContainer = Color(0xFF193622), secondary = Color(0xFF526452), secondaryContainer = Color(0xFFE4EBE3), onSecondaryContainer = Color(0xFF243629), background = Color(0xFFFAFAF8), surface = Color(0xFFFAFAF8), surfaceContainer = Color(0xFFF0F1EC), surfaceVariant = Color(0xFFE3E7E0))
+    val colors = if (dark) darkColorScheme(
+        primary = Color(0xFFA3C7AE), primaryContainer = Color(0xFF2B4031), onPrimaryContainer = Color(0xFFDCEADC),
+        secondary = Color(0xFFACBDAE), secondaryContainer = Color(0xFF303D32), onSecondaryContainer = Color(0xFFDCEADC),
+        background = Color(0xFF151715), onBackground = Color(0xFFE7EAE5), surface = Color(0xFF1C1E1C), onSurface = Color(0xFFE7EAE5),
+        surfaceContainer = Color(0xFF222722), surfaceContainerHighest = Color(0xFF343B34), surfaceVariant = Color(0xFF343B34),
+        onSurfaceVariant = Color(0xFFBDC5BB), outline = Color(0xFF8A9489), outlineVariant = Color(0xFF424B41))
+    else lightColorScheme(
+        primary = Color(0xFF3D614D), primaryContainer = Color(0xFFDFEADF), onPrimaryContainer = Color(0xFF193622),
+        secondary = Color(0xFF526452), secondaryContainer = Color(0xFFE4EBE3), onSecondaryContainer = Color(0xFF243629),
+        background = Color(0xFFFAFAF8), onBackground = Color(0xFF1D211D), surface = Color(0xFFFAFAF8), onSurface = Color(0xFF1D211D),
+        surfaceContainer = Color(0xFFF0F1EC), surfaceContainerHighest = Color(0xFFE3E7E0), surfaceVariant = Color(0xFFE3E7E0),
+        onSurfaceVariant = Color(0xFF4B544B), outline = Color(0xFF788277), outlineVariant = Color(0xFFC5CCC2))
     MaterialTheme(colorScheme = colors, content = content)
 }
 

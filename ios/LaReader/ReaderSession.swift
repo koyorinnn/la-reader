@@ -189,7 +189,12 @@ struct ReaderHost: UIViewControllerRepresentable {
         if let rules = PublicationService.shared.offlineRules { userContentController.add(rules) }
     }
     func navigatorContentInset(_ navigator: VisualNavigator) -> UIEdgeInsets? {
-        UIEdgeInsets(top: max(view.safeAreaInsets.top, 20) + 42, left: view.safeAreaInsets.left, bottom: max(view.safeAreaInsets.bottom, 16) + 58, right: view.safeAreaInsets.right)
+        // SwiftUI's edge-to-edge host reports zero safe area. Use the window so
+        // the first/last lines stay clear of the floating controls and notch.
+        let safe = navigator.view.window?.safeAreaInsets ?? .zero
+        let portraitPhone = UIDevice.current.userInterfaceIdiom == .phone && view.bounds.height > view.bounds.width
+        let top: CGFloat = portraitPhone ? 59 : UIDevice.current.userInterfaceIdiom == .pad ? 32 : 0
+        return UIEdgeInsets(top: max(safe.top, top) + 64, left: safe.left, bottom: max(safe.bottom, 20) + 88, right: safe.right)
     }
     override var keyCommands: [UIKeyCommand]? {
         [UIKeyCommand(input: UIKeyCommand.inputLeftArrow, modifierFlags: [], action: #selector(previousPage)),
