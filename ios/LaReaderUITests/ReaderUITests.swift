@@ -42,7 +42,12 @@ final class ReaderUITests: XCTestCase {
         app.buttons["reader-settings"].tap()
         let double = app.switches["reader-double"]
         XCTAssertTrue(double.waitForExistence(timeout: 5))
-        if double.value as? String == "0" { double.tap() }
+        if double.value as? String == "0" {
+            let control = double.switches.firstMatch
+            if control.exists { control.tap() }
+            else { double.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap() }
+        }
+        XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: double)], timeout: 5) == .completed)
         app.buttons["Xong"].tap()
         let progress = app.staticTexts["reader-progress"]
         XCTAssertTrue(progress.waitForExistence(timeout: 5))
@@ -61,6 +66,6 @@ final class ReaderUITests: XCTestCase {
     }
     private func waitLabel(_ element: XCUIElement, _ label: String) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)], timeout: 10) == .completed }
     private func waitGone(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)], timeout: 5) == .completed }
-    private func waitEnabled(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: element)], timeout: 30) == .completed }
+    private func waitEnabled(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: element)], timeout: 60) == .completed }
     @MainActor private func attach(_ name: String) { let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot) }
 }

@@ -56,7 +56,6 @@ import WebKit
     }
     func didLocate(_ locator: Locator) {
         readerTrace("location progress=\(locator.locations.totalProgression ?? -1)")
-        ready = true
         self.locator = locator
         progress = locator.locations.totalProgression ?? progress
         label = "\(Int((progress*100).rounded()))%"
@@ -88,6 +87,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     private var settings: ReaderSettings
     private var effectivePages = 0
     private var snapshot: UIView?
+    private var readinessTask: Task<Void, Never>?
     init(session: ReaderSession) {
         self.session = session; settings = session.store.settings
         super.init(nibName: nil, bundle: nil)
@@ -133,6 +133,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     }
     func configure(_ value: ReaderSettings) {
         guard value != settings else { return }
+        readerTrace("settings epubDouble=\(value.epubDouble) comicDouble=\(value.comicDouble) bounds=\(view.bounds)")
         settings = value; effectivePages = 0
         view.backgroundColor = value.theme.uiColor
         epub?.submitPreferences(preferences())
@@ -150,7 +151,7 @@ struct ReaderHost: UIViewControllerRepresentable {
         readerTrace("turn forward=\(forward) busy=\(session.turning) ready=\(session.ready)")
         guard !session.turning else { return }
         if let comic { comic.turn(forward); return }
-        guard let epub else { return }
+        guard let epub, session.ready else { return }
         session.turning = true
         let animate = !UIAccessibility.isReduceMotionEnabled && settings.motion != .none
         let flip = animate && settings.motion == .curl
@@ -183,7 +184,21 @@ struct ReaderHost: UIViewControllerRepresentable {
         case nil: break
         }
     }
-    func navigator(_ navigator: Navigator, locationDidChange locator: Locator) { session.didLocate(locator) }
+    func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
+        session.didLocate(locator)
+        guard !session.ready, readinessTask == nil, let epub else { return }
+        readinessTask = Task { [weak self] in
+            // Readium's script API awaits the visible spread's load completion.
+            // Its initial locator alone does not mean the chapter has rendered.
+            let result = await epub.evaluateJavaScript("true")
+            guard !Task.isCancelled else { return }
+            self?.readinessTask = nil
+            if case .success = result {
+                readerTrace("epub spread ready")
+                self?.session.ready = true
+            }
+        }
+    }
     func navigator(_ navigator: Navigator, presentError error: NavigatorError) { session.error = error.localizedDescription }
     func navigator(_ navigator: EPUBNavigatorViewController, setupUserScripts userContentController: WKUserContentController) {
         if let rules = PublicationService.shared.offlineRules { userContentController.add(rules) }
@@ -204,6 +219,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     @objc private func previousPage() { turn(false) }
     @objc private func nextPage() { turn(true) }
     @objc private func showControls() { session.chrome = true }
+    deinit { readinessTask?.cancel() }
 }
 
 func readerTrace(_ message: @autoclosure () -> String) {

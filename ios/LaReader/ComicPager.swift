@@ -13,6 +13,7 @@ import ReadiumShared
     required init?(coder: NSCoder) { fatalError("Use init(session:settings:)") }
     override func viewDidLoad() { super.viewDidLoad(); rebuild() }
     func configure(_ value: ReaderSettings, pages: Int) {
+        readerTrace("comic layout pages=\(pages) double=\(value.comicDouble)")
         let rebuildRequired = value.motion != settings.motion || value.rightToLeft != settings.rightToLeft
         let relayout = self.pages != pages || settings.theme != value.theme
         settings = value; self.pages = pages
