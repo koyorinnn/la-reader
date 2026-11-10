@@ -188,7 +188,7 @@ struct ReaderHost: UIViewControllerRepresentable {
                         pageMargins: 1.3, publisherStyles: false, scroll: false,
                         // Synthetic spreads are for fixed-layout EPUBs. Changing
                         // this for reflowable text needlessly reloads the chapter.
-                        spread: session.publication?.metadata.epubLayout == .fixed && effectivePages == 2 ? .always : .never,
+                        spread: session.publication?.metadata.layout == .fixed && effectivePages == 2 ? .always : .never,
                         theme: settings.theme == .dark ? .dark : settings.theme == .sepia ? .sepia : .light)
     }
     func turn(_ forward: Bool) {
