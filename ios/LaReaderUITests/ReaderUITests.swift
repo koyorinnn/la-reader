@@ -47,6 +47,22 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(book.waitForExistence(timeout: 5)); book.tap()
         XCTAssertTrue(hide.waitForExistence(timeout: 20)); XCTAssertTrue(waitEnabled(hide))
         XCTAssertTrue(waitProgress(progress, near: readingPosition))
+        let singlePosition = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
+        app.buttons["reader-settings"].tap()
+        let double = app.switches["reader-double"]
+        XCTAssertTrue(double.waitForExistence(timeout: 5))
+        if double.value as? String == "1" {
+            let control = double.switches.firstMatch
+            if control.exists { control.tap() }
+            else { double.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap() }
+        }
+        XCTAssertEqual(double.value as? String, "0")
+        app.buttons["Xong"].tap()
+        XCUIDevice.shared.orientation = .portrait
+        XCTAssertTrue(waitEnabled(hide))
+        XCTAssertTrue(waitProgress(progress, near: singlePosition))
+        XCTAssertGreaterThan(web.frame.height, app.windows.firstMatch.frame.height * 0.55)
+        attach("Native EPUB single-page portrait")
     }
     @MainActor func testCBZNativePagingAndHiddenControls() throws {
         let app = XCUIApplication(); app.launchArguments = ["--uitest"]; app.launch()

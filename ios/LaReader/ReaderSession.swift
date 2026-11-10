@@ -140,7 +140,7 @@ struct ReaderHost: UIViewControllerRepresentable {
             session.ready = false
             effectivePages = ReaderPolicy.pages(width: size.width, height: size.height, double: settings.epubDouble)
             session.pages = effectivePages
-            epub?.submitPreferences(preferences())
+            epub?.submitPreferences(preferences(for: size))
             coordinator.animate(alongsideTransition: nil) { [weak self] _ in
                 self?.restoreLocationAfterReflow()
             }
@@ -182,15 +182,18 @@ struct ReaderHost: UIViewControllerRepresentable {
         comic?.configure(value, pages: effectivePages)
         view.setNeedsLayout()
     }
-    private func preferences() -> EPUBPreferences {
+    private func preferences(for targetSize: CGSize? = nil) -> EPUBPreferences {
         // Readium 3.11 needs a spread reload when an iPhone changes between
         // compact and regular height; otherwise WebKit can retain the old
         // column height. The reflow locator above survives that reload.
-        let reloadSpread = UIDevice.current.userInterfaceIdiom == .phone || session.publication?.metadata.layout == .fixed
+        let size = targetSize ?? view.bounds.size
+        let spread = session.publication?.metadata.layout == .fixed
+            ? effectivePages == 2
+            : UIDevice.current.userInterfaceIdiom == .phone && size.width > size.height
         return EPUBPreferences(columnCount: effectivePages == 2 ? .two : .one,
                         fontSize: settings.fontSize / 19, lineHeight: settings.lineHeight,
                         pageMargins: 1.3, publisherStyles: false, scroll: false,
-                        spread: reloadSpread && effectivePages == 2 ? .always : .never,
+                        spread: spread ? .always : .never,
                         theme: settings.theme == .dark ? .dark : settings.theme == .sepia ? .sepia : .light)
     }
     func turn(_ forward: Bool) {
