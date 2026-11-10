@@ -22,6 +22,11 @@ final class ReaderUITests: XCTestCase {
         let before = progress.label
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", before), object: progress)], timeout: 10) == .completed)
+        // Rotate well into the chapter: a first-page smoke test cannot detect
+        // a reflow that silently resets the locator to the chapter's start.
+        app.sliders["Tiến độ đọc"].adjust(toNormalizedSliderPosition: 0.45)
+        XCTAssertTrue(waitProgress(progress, near: 45))
+        let readingPosition = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
         app.buttons["reader-settings"].tap()
         XCTAssertTrue(app.switches["reader-double"].waitForExistence(timeout: 5))
         attach("iPad native settings")
@@ -29,8 +34,16 @@ final class ReaderUITests: XCTestCase {
         attach("iPad native EPUB landscape")
         XCUIDevice.shared.orientation = .portrait
         XCTAssertTrue(hide.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitEnabled(hide))
+        XCTAssertTrue(waitProgress(progress, near: readingPosition))
         attach("iPad native EPUB portrait")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        XCTAssertTrue(waitEnabled(hide))
+        XCTAssertTrue(waitProgress(progress, near: readingPosition))
         app.buttons["reader-close"].tap()
+        XCTAssertTrue(book.waitForExistence(timeout: 5)); book.tap()
+        XCTAssertTrue(hide.waitForExistence(timeout: 20)); XCTAssertTrue(waitEnabled(hide))
+        XCTAssertTrue(waitProgress(progress, near: readingPosition))
     }
     @MainActor func testCBZNativePagingAndHiddenControls() throws {
         let app = XCUIApplication(); app.launchArguments = ["--uitest"]; app.launch()
@@ -65,6 +78,14 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(waitLabel(progress, "1–2 / 5"))
     }
     private func waitLabel(_ element: XCUIElement, _ label: String) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)], timeout: 10) == .completed }
+    private func waitProgress(_ element: XCUIElement, near expected: Double) -> Bool {
+        let predicate = NSPredicate { _, _ in
+            guard let value = Double(element.label.replacingOccurrences(of: "%", with: "")) else { return false }
+            // A different viewport may begin earlier within the same page.
+            return abs(value - expected) <= 10
+        }
+        return XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: 30) == .completed
+    }
     private func waitGone(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)], timeout: 5) == .completed }
     private func waitEnabled(_ element: XCUIElement) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: element)], timeout: 60) == .completed }
     @MainActor private func attach(_ name: String) { let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot()); shot.name = name; shot.lifetime = .keepAlways; add(shot) }

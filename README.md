@@ -17,7 +17,9 @@ Giao diện ứng dụng không phụ thuộc React, React Native, Capacitor hay
 
 **Android:** JDK 21, Android SDK 37. Mở `android/` trong Android Studio hoặc chạy `cd android && ./gradlew testDebugUnitTest assembleDebug`. App hỗ trợ Android 8 trở lên.
 
-**GitHub Actions:** workflow build SwiftUI trên macOS, chạy unit test và thao tác EPUB/CBZ trên iPad Simulator, xuất IPA chưa ký; Android chạy unit test, lint và xuất APK debug. IPA cần được ký lại trước khi cài. Một lần build thành công không thay thế việc thử trên thiết bị thật.
+**GitHub Actions:** workflow build SwiftUI trên macOS, chạy unit test và thao tác EPUB/CBZ trên cả iPad và iPhone Simulator, rồi xuất IPA cho thiết bị chưa ký. Android chạy unit test, lint và thao tác đọc trên tablet emulator trước khi xuất APK debug.
+
+Để tự build, đẩy mã nguồn lên nhánh `main`, hoặc vào **Actions → Native iOS and Android → Run workflow**. Sau khi build thành công, tải `la-reader-native-ios-unsigned` hoặc `la-reader-native-android` trong **Artifacts** và giải nén. Không cần tài khoản Apple để tạo IPA chưa ký trên GitHub; IPA cần được ký lại bằng chứng chỉ và provisioning profile phù hợp trước khi cài lên iPhone/iPad. APK debug dùng để cài thử. Chi tiết kết quả kiểm thử ở [VERIFICATION.md](VERIFICATION.md).
 
 Đây là app native; localhost/Vite của bản cũ không hiển thị giao diện phiên bản 2.0. Dùng simulator hoặc cài bản build để xem giao diện mới.
 
@@ -29,6 +31,6 @@ Tệp không DRM, tối đa 100 MB nén / 300 MB giải nén / 40 MB mỗi mục
 
 ## Kiểm thử
 
-`python3 scripts/make-fixtures.py` tạo sách thử riêng trong thư mục bị Git bỏ qua. CI chỉ chép chúng vào app iOS Debug khi `ENABLE_TEST_FIXTURES=YES`; archive Release không có các tệp này. Trình đọc thực được kiểm tra bằng XCTest/XCUITest, Android dùng JUnit và lint.
+`python3 scripts/make-fixtures.py` tạo sách thử riêng trong thư mục bị Git bỏ qua. CI chỉ chép chúng vào app iOS Debug khi `ENABLE_TEST_FIXTURES=YES`; archive Release và APK cài đặt không có các tệp này. Trình đọc thực được kiểm tra bằng XCTest/XCUITest và Android UiAutomator, cùng unit test và lint. Kết quả simulator/emulator chưa thay thế việc thử trên thiết bị thật.
 
 Mã nguồn Capacitor 1.2.1 được giữ ở nhánh `legacy/capacitor-1.2.1` để đối chiếu hoặc quay lại.

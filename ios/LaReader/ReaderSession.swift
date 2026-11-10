@@ -88,6 +88,8 @@ struct ReaderHost: UIViewControllerRepresentable {
     private var effectivePages = 0
     private var snapshot: UIView?
     private var readinessTask: Task<Void, Never>?
+    private var reflowTask: Task<Void, Never>?
+    private var reflowLocator: Locator?
     init(session: ReaderSession) {
         self.session = session; settings = session.store.settings
         super.init(nibName: nil, bundle: nil)
@@ -129,22 +131,64 @@ struct ReaderHost: UIViewControllerRepresentable {
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         snapshot?.layer.removeAllAnimations(); snapshot?.removeFromSuperview(); snapshot = nil
         session.turning = false
+        // Keep the last settled locator while WebKit reflows. Intermediate
+        // zero-progress callbacks must not replace the saved reading position.
+        if epub != nil, let locator = reflowLocator ?? session.locator {
+            reflowTask?.cancel()
+            readinessTask?.cancel(); readinessTask = nil
+            reflowLocator = locator
+            session.ready = false
+            effectivePages = ReaderPolicy.pages(width: size.width, height: size.height, double: settings.epubDouble)
+            session.pages = effectivePages
+            epub?.submitPreferences(preferences())
+            coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+                self?.restoreLocationAfterReflow()
+            }
+        }
         super.viewWillTransition(to: size, with: coordinator)
+    }
+    private func restoreLocationAfterReflow() {
+        guard let epub, let locator = reflowLocator else { return }
+        reflowTask?.cancel()
+        reflowTask = Task { [weak self] in
+            // Let Readium apply queued preferences before awaiting its spread.
+            await Task.yield()
+            let loaded = await epub.evaluateJavaScript("true")
+            guard !Task.isCancelled else { return }
+            if case .failure(let error) = loaded {
+                self?.reflowLocator = nil
+                self?.reflowTask = nil
+                self?.session.error = "Không dàn trang được sách. \(error.localizedDescription)"
+                return
+            }
+            let restored = await epub.go(to: locator, options: .init(animated: false))
+            guard !Task.isCancelled, let self else { return }
+            readerTrace("reflow restored=\(restored) progress=\(locator.locations.totalProgression ?? -1)")
+            self.reflowLocator = nil
+            self.reflowTask = nil
+            self.session.ready = restored
+            if restored { self.session.didLocate(locator) }
+            else { self.session.error = "Không khôi phục được vị trí đọc sau khi đổi bố cục." }
+        }
     }
     func configure(_ value: ReaderSettings) {
         guard value != settings else { return }
         readerTrace("settings epubDouble=\(value.epubDouble) comicDouble=\(value.comicDouble) bounds=\(view.bounds)")
-        settings = value; effectivePages = 0
+        settings = value
+        effectivePages = ReaderPolicy.pages(width: view.bounds.width, height: view.bounds.height, double: session.book.format == .epub ? value.epubDouble : value.comicDouble)
+        session.pages = effectivePages
         view.backgroundColor = value.theme.uiColor
         epub?.submitPreferences(preferences())
-        comic?.configure(value, pages: max(1, session.pages))
+        comic?.configure(value, pages: effectivePages)
         view.setNeedsLayout()
     }
     private func preferences() -> EPUBPreferences {
         EPUBPreferences(columnCount: effectivePages == 2 ? .two : .one,
                         fontSize: settings.fontSize / 19, lineHeight: settings.lineHeight,
                         pageMargins: 1.3, publisherStyles: false, scroll: false,
-                        spread: effectivePages == 2 ? .always : .never,
+                        // Synthetic spreads are for fixed-layout EPUBs. Changing
+                        // this for reflowable text needlessly reloads the chapter.
+                        spread: session.publication?.metadata.epubLayout == .fixed && effectivePages == 2 ? .always : .never,
                         theme: settings.theme == .dark ? .dark : settings.theme == .sepia ? .sepia : .light)
     }
     func turn(_ forward: Bool) {
@@ -185,6 +229,7 @@ struct ReaderHost: UIViewControllerRepresentable {
         }
     }
     func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
+        guard reflowLocator == nil else { return }
         session.didLocate(locator)
         guard !session.ready, readinessTask == nil, let epub else { return }
         readinessTask = Task { [weak self] in
@@ -219,7 +264,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     @objc private func previousPage() { turn(false) }
     @objc private func nextPage() { turn(true) }
     @objc private func showControls() { session.chrome = true }
-    deinit { readinessTask?.cancel() }
+    deinit { readinessTask?.cancel(); reflowTask?.cancel() }
 }
 
 func readerTrace(_ message: @autoclosure () -> String) {
