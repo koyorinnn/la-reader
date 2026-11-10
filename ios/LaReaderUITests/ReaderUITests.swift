@@ -36,6 +36,9 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(hide.waitForExistence(timeout: 5))
         XCTAssertTrue(waitEnabled(hide))
         XCTAssertTrue(waitProgress(progress, near: readingPosition))
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 10))
+        XCTAssertGreaterThan(web.frame.height, app.windows.firstMatch.frame.height * 0.55, "Portrait reader must not retain the landscape viewport height")
         attach("iPad native EPUB portrait")
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(waitEnabled(hide))

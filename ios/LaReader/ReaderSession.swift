@@ -183,12 +183,14 @@ struct ReaderHost: UIViewControllerRepresentable {
         view.setNeedsLayout()
     }
     private func preferences() -> EPUBPreferences {
-        EPUBPreferences(columnCount: effectivePages == 2 ? .two : .one,
+        // Readium 3.11 needs a spread reload when an iPhone changes between
+        // compact and regular height; otherwise WebKit can retain the old
+        // column height. The reflow locator above survives that reload.
+        let reloadSpread = UIDevice.current.userInterfaceIdiom == .phone || session.publication?.metadata.layout == .fixed
+        return EPUBPreferences(columnCount: effectivePages == 2 ? .two : .one,
                         fontSize: settings.fontSize / 19, lineHeight: settings.lineHeight,
                         pageMargins: 1.3, publisherStyles: false, scroll: false,
-                        // Synthetic spreads are for fixed-layout EPUBs. Changing
-                        // this for reflowable text needlessly reloads the chapter.
-                        spread: session.publication?.metadata.layout == .fixed && effectivePages == 2 ? .always : .never,
+                        spread: reloadSpread && effectivePages == 2 ? .always : .never,
                         theme: settings.theme == .dark ? .dark : settings.theme == .sepia ? .sepia : .light)
     }
     func turn(_ forward: Bool) {
