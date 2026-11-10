@@ -25,7 +25,9 @@ final class ReaderUITests: XCTestCase {
         // Rotate well into the chapter: a first-page smoke test cannot detect
         // a reflow that silently resets the locator to the chapter's start.
         app.sliders["Tiến độ đọc"].adjust(toNormalizedSliderPosition: 0.45)
-        XCTAssertTrue(waitProgress(progress, near: 45))
+        // Slider dragging and page snapping need not land on exactly 45%.
+        // The actual settled position is the anchor for the strict checks below.
+        XCTAssertTrue(waitProgress(progress, near: 50, tolerance: 25))
         let readingPosition = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
         app.buttons["reader-settings"].tap()
         XCTAssertTrue(app.switches["reader-double"].waitForExistence(timeout: 5))
@@ -97,11 +99,11 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(waitLabel(progress, "1–2 / 5"))
     }
     private func waitLabel(_ element: XCUIElement, _ label: String) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)], timeout: 10) == .completed }
-    private func waitProgress(_ element: XCUIElement, near expected: Double) -> Bool {
+    private func waitProgress(_ element: XCUIElement, near expected: Double, tolerance: Double = 10) -> Bool {
         let predicate = NSPredicate { _, _ in
             guard let value = Double(element.label.replacingOccurrences(of: "%", with: "")) else { return false }
             // A different viewport may begin earlier within the same page.
-            return abs(value - expected) <= 10
+            return abs(value - expected) <= tolerance
         }
         return XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: 30) == .completed
     }

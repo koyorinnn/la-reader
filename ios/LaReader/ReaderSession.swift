@@ -174,6 +174,12 @@ struct ReaderHost: UIViewControllerRepresentable {
     func configure(_ value: ReaderSettings) {
         guard value != settings else { return }
         readerTrace("settings epubDouble=\(value.epubDouble) comicDouble=\(value.comicDouble) bounds=\(view.bounds)")
+        let restoreAfterColumnChange = epub != nil && value.epubDouble != settings.epubDouble && session.ready && session.locator != nil
+        if restoreAfterColumnChange {
+            reflowTask?.cancel()
+            reflowLocator = session.locator
+            session.ready = false
+        }
         settings = value
         effectivePages = ReaderPolicy.pages(width: view.bounds.width, height: view.bounds.height, double: session.book.format == .epub ? value.epubDouble : value.comicDouble)
         session.pages = effectivePages
@@ -181,6 +187,7 @@ struct ReaderHost: UIViewControllerRepresentable {
         epub?.submitPreferences(preferences())
         comic?.configure(value, pages: effectivePages)
         view.setNeedsLayout()
+        if restoreAfterColumnChange { restoreLocationAfterReflow() }
     }
     private func preferences(for targetSize: CGSize? = nil) -> EPUBPreferences {
         // Readium 3.11 needs a spread reload when an iPhone changes between
