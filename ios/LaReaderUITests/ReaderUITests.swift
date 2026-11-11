@@ -55,7 +55,6 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(book.waitForExistence(timeout: 5)); book.tap()
         XCTAssertTrue(hide.waitForExistence(timeout: 20)); XCTAssertTrue(waitEnabled(hide))
         XCTAssertTrue(waitProgress(progress, near: readingPosition))
-        let singlePosition = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
         app.buttons["reader-settings"].tap()
         let double = app.switches["reader-double"]
         XCTAssertTrue(double.waitForExistence(timeout: 5))
@@ -68,9 +67,18 @@ final class ReaderUITests: XCTestCase {
         app.buttons["Xong"].tap()
         XCUIDevice.shared.orientation = .portrait
         XCTAssertTrue(waitEnabled(hide))
-        XCTAssertTrue(waitProgress(progress, near: singlePosition))
+        XCTAssertTrue(waitProgress(progress, near: readingPosition))
         XCTAssertGreaterThan(web.frame.height, app.windows.firstMatch.frame.height * 0.55)
         attach("Native EPUB single-page portrait")
+        // A restored anchor must release on real navigation, including the
+        // navigator's own swipe gesture, so progress never becomes frozen.
+        let beforeSwipe = progress.label
+        web.swipeLeft()
+        XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", beforeSwipe), object: progress)], timeout: 10) == .completed)
+        XCTAssertTrue(waitEnabled(hide))
+        let afterSwipe = progress.label
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
+        XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", afterSwipe), object: progress)], timeout: 10) == .completed)
     }
     @MainActor func testCBZNativePagingAndHiddenControls() throws {
         let app = XCUIApplication(); app.launchArguments = ["--uitest"]; app.launch()
@@ -105,10 +113,11 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(waitLabel(progress, "1–2 / 5"))
     }
     private func waitLabel(_ element: XCUIElement, _ label: String) -> Bool { XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)], timeout: 10) == .completed }
-    private func waitProgress(_ element: XCUIElement, near expected: Double, tolerance: Double = 10) -> Bool {
+    private func waitProgress(_ element: XCUIElement, near expected: Double, tolerance: Double = 1) -> Bool {
         let predicate = NSPredicate { _, _ in
             guard let value = Double(element.label.replacingOccurrences(of: "%", with: "")) else { return false }
-            // A different viewport may begin earlier within the same page.
+            // Reflow can change the visible page start, but must keep the
+            // original reading anchor across the complete sequence.
             return abs(value - expected) <= tolerance
         }
         return XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: 30) == .completed

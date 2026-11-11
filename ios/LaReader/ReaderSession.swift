@@ -90,8 +90,13 @@ struct ReaderHost: UIViewControllerRepresentable {
     private var readinessTask: Task<Void, Never>?
     private var reflowTask: Task<Void, Never>?
     private var reflowLocator: Locator?
+    // Readium reports the start of the newly laid-out page, which can be
+    // earlier than the reading anchor. Keep that anchor until navigation input
+    // so repeated rotations/reopens do not gradually move backward in the book.
+    private var preservedLocator: Locator?
     init(session: ReaderSession) {
         self.session = session; settings = session.store.settings
+        preservedLocator = session.locator
         super.init(nibName: nil, bundle: nil)
         session.host = self
     }
@@ -103,7 +108,20 @@ struct ReaderHost: UIViewControllerRepresentable {
         do {
             if session.book.format == .epub {
                 let navigator = try EPUBNavigatorViewController(publication: publication, initialLocation: session.locator, config: .init(preferences: preferences()))
-                navigator.delegate = self; epub = navigator; embed(navigator)
+                navigator.delegate = self; epub = navigator
+                navigator.addObserver(.drag(onStart: { [weak self] _ in
+                    self?.resumeLocationTracking()
+                    return false
+                }))
+                navigator.addObserver(.key { [weak self] event in
+                    switch event.key {
+                    case .arrowLeft, .arrowRight, .arrowUp, .arrowDown, .pageUp, .pageDown, .home, .end, .space:
+                        self?.resumeLocationTracking()
+                    default: break
+                    }
+                    return false
+                })
+                embed(navigator)
             } else {
                 let pager = ComicPagerController(session: session, settings: settings)
                 comic = pager; embed(pager)
@@ -137,6 +155,7 @@ struct ReaderHost: UIViewControllerRepresentable {
             reflowTask?.cancel()
             readinessTask?.cancel(); readinessTask = nil
             reflowLocator = locator
+            preservedLocator = locator
             session.ready = false
             effectivePages = ReaderPolicy.pages(width: size.width, height: size.height, double: settings.epubDouble)
             session.pages = effectivePages
@@ -174,10 +193,12 @@ struct ReaderHost: UIViewControllerRepresentable {
     func configure(_ value: ReaderSettings) {
         guard value != settings else { return }
         readerTrace("settings epubDouble=\(value.epubDouble) comicDouble=\(value.comicDouble) bounds=\(view.bounds)")
-        let restoreAfterColumnChange = epub != nil && value.epubDouble != settings.epubDouble && session.ready && session.locator != nil
-        if restoreAfterColumnChange {
+        let layoutChanged = value.epubDouble != settings.epubDouble || value.fontSize != settings.fontSize || value.lineHeight != settings.lineHeight
+        let restoreAfterLayoutChange = epub != nil && layoutChanged && session.ready && session.locator != nil
+        if restoreAfterLayoutChange {
             reflowTask?.cancel()
             reflowLocator = session.locator
+            preservedLocator = session.locator
             session.ready = false
         }
         settings = value
@@ -187,7 +208,7 @@ struct ReaderHost: UIViewControllerRepresentable {
         epub?.submitPreferences(preferences())
         comic?.configure(value, pages: effectivePages)
         view.setNeedsLayout()
-        if restoreAfterColumnChange { restoreLocationAfterReflow() }
+        if restoreAfterLayoutChange { restoreLocationAfterReflow() }
     }
     private func preferences(for targetSize: CGSize? = nil) -> EPUBPreferences {
         // Readium 3.11 needs a spread reload when an iPhone changes between
@@ -208,6 +229,7 @@ struct ReaderHost: UIViewControllerRepresentable {
         guard !session.turning else { return }
         if let comic { comic.turn(forward); return }
         guard let epub, session.ready else { return }
+        resumeLocationTracking()
         session.turning = true
         let animate = !UIAccessibility.isReduceMotionEnabled && settings.motion != .none
         let flip = animate && settings.motion == .curl
@@ -230,6 +252,19 @@ struct ReaderHost: UIViewControllerRepresentable {
     func showComic(_ page: Int) { comic?.show(page) }
     func go(_ locator: Locator) { Task { await epub?.go(to: locator) } }
     func go(_ link: ReadiumShared.Link) { Task { await epub?.go(to: link) } }
+    private func resumeLocationTracking() {
+        guard session.ready, reflowLocator == nil else { return }
+        if preservedLocator != nil { readerTrace("resume location tracking after input") }
+        preservedLocator = nil
+    }
+    func navigator(_ navigator: Navigator, didJumpTo locator: Locator) {
+        guard reflowLocator == nil, session.ready else { return }
+        // Explicit TOC/bookmark/link/slider jumps establish a new anchor.
+        // Locators without a total progression are resolved by the next
+        // location callback instead.
+        preservedLocator = locator.locations.totalProgression == nil ? nil : locator
+        if let preservedLocator { session.didLocate(preservedLocator) }
+    }
     func navigator(_ navigator: VisualNavigator, didTapAt point: CGPoint) {
         readerTrace("epub tap=\(point) bounds=\(navigator.view.bounds) busy=\(session.turning)")
         guard !session.turning else { return }
@@ -242,7 +277,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     }
     func navigator(_ navigator: Navigator, locationDidChange locator: Locator) {
         guard reflowLocator == nil else { return }
-        session.didLocate(locator)
+        session.didLocate(preservedLocator ?? locator)
         guard !session.ready, readinessTask == nil, let epub else { return }
         readinessTask = Task { [weak self] in
             // Readium's script API awaits the visible spread's load completion.
