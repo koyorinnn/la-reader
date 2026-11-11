@@ -55,6 +55,7 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(book.waitForExistence(timeout: 5)); book.tap()
         XCTAssertTrue(hide.waitForExistence(timeout: 20)); XCTAssertTrue(waitEnabled(hide))
         XCTAssertTrue(waitProgress(progress, near: readingPosition))
+        XCTAssertEqual(app.sliders["Tiến độ đọc"].value as? String, progress.label)
         app.buttons["reader-settings"].tap()
         let double = app.switches["reader-double"]
         XCTAssertTrue(double.waitForExistence(timeout: 5))

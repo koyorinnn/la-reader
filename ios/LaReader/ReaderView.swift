@@ -14,6 +14,7 @@ struct ReaderView: View {
     @State private var scrubbing = false
     init(book: LibraryBook, store: LibraryStore) {
         self.store = store; _session = StateObject(wrappedValue: ReaderSession(book: book, store: store))
+        _slider = State(initialValue: book.progress)
     }
     var body: some View {
         ZStack {
