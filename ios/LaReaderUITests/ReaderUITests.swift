@@ -22,13 +22,19 @@ final class ReaderUITests: XCTestCase {
         let before = progress.label
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", before), object: progress)], timeout: 10) == .completed)
-        // Rotate well into the chapter: a first-page smoke test cannot detect
-        // a reflow that silently resets the locator to the chapter's start.
-        app.sliders["Tiến độ đọc"].adjust(toNormalizedSliderPosition: 0.45)
-        // Slider dragging and page snapping need not land on exactly 45%.
-        // The actual settled position is the anchor for the strict checks below.
-        XCTAssertTrue(waitProgress(progress, near: 50, tolerance: 25))
+        // Reach a settled location through real page turns. XCTest's slider
+        // adjustment is unreliable in a rotated simulator and is unrelated
+        // to the reflow regression this test covers.
+        for _ in 0..<24 {
+            let current = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
+            if current >= 25 { break }
+            XCTAssertTrue(waitEnabled(hide))
+            let previous = progress.label
+            app.buttons["Trang sau"].tap()
+            XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", previous), object: progress)], timeout: 10) == .completed)
+        }
         let readingPosition = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
+        XCTAssertGreaterThanOrEqual(readingPosition, 25)
         app.buttons["reader-settings"].tap()
         XCTAssertTrue(app.switches["reader-double"].waitForExistence(timeout: 5))
         attach("iPad native settings")

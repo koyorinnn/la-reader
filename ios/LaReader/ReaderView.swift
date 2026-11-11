@@ -10,6 +10,7 @@ struct ReaderView: View {
     @State private var contentsVisible = false
     @State private var bookmarksVisible = false
     @State private var slider: Double = 0
+    @State private var scrubOrigin: Double = 0
     @State private var scrubbing = false
     init(book: LibraryBook, store: LibraryStore) {
         self.store = store; _session = StateObject(wrappedValue: ReaderSession(book: book, store: store))
@@ -64,8 +65,15 @@ struct ReaderView: View {
             HStack(spacing: 8) {
                 Button { session.turn(false) } label: { readerIcon("chevron.left") }.accessibilityLabel("Trang trước")
                 Slider(value: $slider, in: 0...1, onEditingChanged: { editing in
-                    scrubbing = editing
-                    if !editing { session.jump(slider) }
+                    if editing {
+                        scrubOrigin = slider
+                        scrubbing = true
+                    } else {
+                        scrubbing = false
+                        // Touching the thumb without moving it must not seek
+                        // to an earlier rounded publication position.
+                        if abs(slider - scrubOrigin) > 0.0001 { session.jump(slider) }
+                    }
                 }).accessibilityLabel("Tiến độ đọc")
                 Button { session.turn(true) } label: { readerIcon("chevron.right") }.accessibilityLabel("Trang sau")
                 Button { session.toggleChrome() } label: { readerIcon("arrow.down.right.and.arrow.up.left") }
