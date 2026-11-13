@@ -72,14 +72,23 @@ final class ReaderUITests: XCTestCase {
         XCTAssertGreaterThan(web.frame.height, app.windows.firstMatch.frame.height * 0.55)
         attach("Native EPUB single-page portrait")
         // A restored anchor must release on real navigation, including the
-        // navigator's own swipe gesture, so progress never becomes frozen.
+        // a native swipe gesture, so progress never becomes frozen.
         let beforeSwipe = progress.label
         web.swipeLeft()
         XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", beforeSwipe), object: progress)], timeout: 10) == .completed)
+        let forwardPosition = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
+        XCTAssertGreaterThan(forwardPosition, readingPosition)
+        XCTAssertTrue(waitEnabled(hide))
+        let beforeBackSwipe = progress.label
+        web.swipeRight()
+        XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", beforeBackSwipe), object: progress)], timeout: 10) == .completed)
+        let backwardPosition = try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: "")))
+        XCTAssertLessThan(backwardPosition, forwardPosition)
         XCTAssertTrue(waitEnabled(hide))
         let afterSwipe = progress.label
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)).tap()
         XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", afterSwipe), object: progress)], timeout: 10) == .completed)
+        XCTAssertGreaterThan(try XCTUnwrap(Double(progress.label.replacingOccurrences(of: "%", with: ""))), backwardPosition)
     }
     @MainActor func testCBZNativePagingAndHiddenControls() throws {
         let app = XCUIApplication(); app.launchArguments = ["--uitest"]; app.launch()

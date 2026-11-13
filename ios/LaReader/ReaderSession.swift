@@ -80,7 +80,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: ReaderHostController, context: Context) { controller.configure(settings) }
 }
 
-@MainActor final class ReaderHostController: UIViewController, EPUBNavigatorDelegate {
+@MainActor final class ReaderHostController: UIViewController, EPUBNavigatorDelegate, UIGestureRecognizerDelegate {
     let session: ReaderSession
     private var epub: EPUBNavigatorViewController?
     private var comic: ComicPagerController?
@@ -94,6 +94,7 @@ struct ReaderHost: UIViewControllerRepresentable {
     // earlier than the reading anchor. Keep that anchor until navigation input
     // so repeated rotations/reopens do not gradually move backward in the book.
     private var preservedLocator: Locator?
+    private var pageSwipes: [UISwipeGestureRecognizer] = []
     init(session: ReaderSession) {
         self.session = session; settings = session.store.settings
         preservedLocator = session.locator
@@ -109,10 +110,6 @@ struct ReaderHost: UIViewControllerRepresentable {
             if session.book.format == .epub {
                 let navigator = try EPUBNavigatorViewController(publication: publication, initialLocation: session.locator, config: .init(preferences: preferences()))
                 navigator.delegate = self; epub = navigator
-                navigator.addObserver(.drag(onStart: { [weak self] _ in
-                    self?.resumeLocationTracking()
-                    return false
-                }))
                 navigator.addObserver(.key { [weak self] event in
                     switch event.key {
                     case .arrowLeft, .arrowRight, .arrowUp, .arrowDown, .pageUp, .pageDown, .home, .end, .space:
@@ -122,6 +119,14 @@ struct ReaderHost: UIViewControllerRepresentable {
                     return false
                 })
                 embed(navigator)
+                for direction in [UISwipeGestureRecognizer.Direction.left, .right] {
+                    let swipe = UISwipeGestureRecognizer(target: self, action: #selector(didSwipePage(_:)))
+                    swipe.direction = direction
+                    swipe.numberOfTouchesRequired = 1
+                    swipe.delegate = self
+                    pageSwipes.append(swipe)
+                    navigator.view.addGestureRecognizer(swipe)
+                }
             } else {
                 let pager = ComicPagerController(session: session, settings: settings)
                 comic = pager; embed(pager)
@@ -252,6 +257,22 @@ struct ReaderHost: UIViewControllerRepresentable {
     func showComic(_ page: Int) { comic?.show(page) }
     func go(_ locator: Locator) { Task { await epub?.go(to: locator) } }
     func go(_ link: ReadiumShared.Link) { Task { await epub?.go(to: link) } }
+    @objc private func didSwipePage(_ gesture: UISwipeGestureRecognizer) {
+        guard gesture.state == .ended, let epub else { return }
+        let forward = (gesture.direction == .left) == (epub.presentation.readingProgression != .rtl)
+        readerTrace("epub swipe forward=\(forward)")
+        turn(forward)
+    }
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard pageSwipes.contains(where: { $0 === gestureRecognizer }) else { return true }
+        return session.ready && !session.turning && epub?.currentSelection == nil
+    }
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Nested WebKit pans must wait for our paging swipe to fail. This
+        // routes a swipe through the same animation/position path as a tap
+        // and prevents the native scroll view from advancing a second page.
+        return pageSwipes.contains(where: { $0 === gestureRecognizer }) && otherGestureRecognizer is UIPanGestureRecognizer
+    }
     private func resumeLocationTracking() {
         guard session.ready, reflowLocator == nil else { return }
         if preservedLocator != nil { readerTrace("resume location tracking after input") }
