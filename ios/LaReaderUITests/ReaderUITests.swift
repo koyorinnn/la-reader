@@ -71,8 +71,8 @@ final class ReaderUITests: XCTestCase {
         XCTAssertTrue(waitProgress(progress, near: readingPosition))
         XCTAssertGreaterThan(web.frame.height, app.windows.firstMatch.frame.height * 0.55)
         attach("Native EPUB single-page portrait")
-        // A restored anchor must release on real navigation, including the
-        // a native swipe gesture, so progress never becomes frozen.
+        // A restored anchor must release on real navigation, including a
+        // native swipe gesture, so progress never becomes frozen.
         let beforeSwipe = progress.label
         web.swipeLeft()
         XCTAssertTrue(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "label != %@", beforeSwipe), object: progress)], timeout: 10) == .completed)

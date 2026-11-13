@@ -265,7 +265,18 @@ struct ReaderHost: UIViewControllerRepresentable {
     }
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard pageSwipes.contains(where: { $0 === gestureRecognizer }) else { return true }
-        return session.ready && !session.turning && epub?.currentSelection == nil
+        let allowed = session.ready && !session.turning && epub?.currentSelection == nil
+        readerTrace("epub swipe candidate allowed=\(allowed) ready=\(session.ready) busy=\(session.turning) selection=\(epub?.currentSelection != nil)")
+        return allowed
+    }
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // WebKit's touch-delivery recognizers must keep receiving the same
+        // touch stream. They can recognize before a discrete swipe does.
+        // Scrolling still waits for the swipe through the failure rule below,
+        // so a recognized swipe cannot also scroll to a second page.
+        return pageSwipes.contains(where: { $0 === gestureRecognizer })
+            && !pageSwipes.contains(where: { $0 === otherGestureRecognizer })
+            && !(otherGestureRecognizer is UIPanGestureRecognizer)
     }
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         // Nested WebKit pans must wait for our paging swipe to fail. This
